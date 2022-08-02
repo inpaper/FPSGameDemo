@@ -17,27 +17,19 @@ AMyCharacter::AMyCharacter()
 	GunComponent = CreateDefaultSubobject<USkeletalMeshComponent>("Gun");
 	GunSpotLightComponent = CreateDefaultSubobject<USpotLightComponent>("GunSpotLightComponent");
 	
-	// 锁定鼠标旋转，让鼠标旋转的时候不旋转人物
-	// bUseControllerRotationPitch = false;
-	// bUseControllerRotationYaw = false;
-	// bUseControllerRotationRoll = false;
-
-	// Configure character movement
-	// GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
-	// GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f); // ...at this rotation rate
-	// GetCharacterMovement()->JumpZVelocity = 600.f;
-	// GetCharacterMovement()->AirControl = 0.2f;
+	GetCharacterMovement()->JumpZVelocity = 600.f;
+	GetCharacterMovement()->AirControl = 0.2f;
 	
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>("CameraComponent");
-	// CameraComponent->bUsePawnControlRotation = false;
 
 	CameraSpringArmComponent = CreateDefaultSubobject<USpringArmComponent>("CameraSpringArmComponent");
-	// TODO 设置不了初始旋转度数
-	const FRotator SpringRot = FRotator::FRotator(-20.0f,.0f,.0f);
-	CameraSpringArmComponent->SetRelativeRotation(SpringRot);
+	
+	// spring使用了pawn控制，因此设置不了初始旋转度数
+	// const FRotator SpringRot = FRotator::FRotator(-20.0f,.0f,.0f);
+	// CameraSpringArmComponent->SetRelativeRotation(SpringRot);
+	
 	CameraSpringArmComponent->AttachTo(RootComponent);
 	CameraSpringArmComponent->TargetArmLength = 600.0f;
-	
 	
 	CameraSpringArmComponent->bUsePawnControlRotation = true;
 	CameraComponent->AttachTo(CameraSpringArmComponent);
@@ -47,9 +39,21 @@ AMyCharacter::AMyCharacter()
 void AMyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	if(GunComponent == nullptr)return;
-	GunComponent->AttachToComponent(GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GunPoint"));
-	GunSpotLightComponent->AttachToComponent(GunComponent, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("LightPoint"));
+	if(CameraSpringArmComponent)
+	{
+		AddControllerPitchInput(StartCameraTurnPitch);
+	}
+
+	// 使枪的模型贴合人物手部骨骼点，并使SpotLight贴合到枪的射击口
+	if(GunComponent)
+	{
+		GunComponent->AttachToComponent(GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GunPoint"));
+		if(GunSpotLightComponent)
+		{
+			GunSpotLightComponent->AttachToComponent(GunComponent, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("LightPoint"));
+		}
+	}
+
 }
 
 // Called every frame
@@ -69,7 +73,7 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAxis("MouseX", this, &APawn::AddControllerYawInput);
 	PlayerInputComponent->BindAxis("MouseY", this, &APawn::AddControllerPitchInput);
 
-	// 实现了控制八方向移动情况。开发过程中先注释
+	// 实现控制八方向移动情况。
 	PlayerInputComponent->BindAction("OnlyXOrY",IE_Pressed,this,&AMyCharacter::StartRunEight);
 	PlayerInputComponent->BindAction("OnlyXOrY",IE_Released,this,&AMyCharacter::StopRunEight);
 
@@ -97,6 +101,8 @@ void AMyCharacter::MoveForward(float Value)
 			bRunY = false;
 			return;
 		}
+
+		// 限制八方向位移
 		if(bRunX && !bRunEight)return;
 		bRunY = true;
 		
@@ -118,6 +124,7 @@ void AMyCharacter::MoveRight(float Value)
 			return;
 		}
 
+		// 限制八方向位移
 		if(bRunY && !bRunEight)return;
 		bRunX = true;
 		
