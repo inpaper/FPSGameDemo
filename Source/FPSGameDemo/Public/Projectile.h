@@ -8,6 +8,7 @@
 #include "PhysicsEngine/RadialForceComponent.h"
 #include "Projectile.generated.h"
 
+class USphereComponent;
 UCLASS()
 class FPSGAMEDEMO_API AProjectile : public AActor
 {
@@ -25,17 +26,15 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(EditAnywhere,Category=Projectile)
+	USphereComponent* CollisionMesh;
+	
+	UPROPERTY(VisibleAnywhere,Category=Projectile)
 	UProjectileMovementComponent* ProjectileMovementComponent;
 
-	UPROPERTY(VisibleAnywhere)
-	UStaticMeshComponent* CollisionMesh;
-
-	// UPROPERTY(VisibleAnywhere)
-	// URadialForceComponent* CollisionForce;
-	//
-	// UFUNCTION()
-	// void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit );
-
+	UPROPERTY(EditAnywhere,Category=Projectile)
+	float HitForceBonus = 100.0f;
 	
+	UFUNCTION()
+	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit );
 };
