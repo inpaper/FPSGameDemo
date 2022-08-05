@@ -136,5 +136,22 @@ void AMyCharacter::MoveRight(float Value)
 	}
 }
 
+float AMyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	UE_LOG(LogTemp,Warning,TEXT("受到伤害 %s"),*GetActorLocation().ToString());
+	
+	int32 GetDamage = FPlatformMath::RoundToInt(DamageAmount);
+	GetDamage = FMath::Clamp(GetDamage,0,CurrentHP);
+
+	CurrentHP -= GetDamage;
+
+	if(CurrentHP <= 0)
+	{
+		UE_LOG(LogTemp,Warning,TEXT("%s 玩家血量归零"),*GetName());
+	}
+
+	return GetDamage;
+}
+
 
 

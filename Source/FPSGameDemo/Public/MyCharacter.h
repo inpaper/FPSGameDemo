@@ -24,6 +24,9 @@ public:
 	// Sets default values for this character's properties
 	AMyCharacter();
 
+	// 玩家伤害计算
+	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+	
 	// 内部实现的摄像机设置不了初始旋转度数 原因：spring组件使用了bUsePawnControlRotation后控制权不在spring组件上
 	// TODO 开始时如何调整摄像机角度
 	UPROPERTY(BlueprintReadWrite,EditAnywhere,Category= "Camera")
@@ -66,4 +69,10 @@ private:
 	// 判断是否当前正在按下X或者Y
 	bool bRunX = false;
 	bool bRunY = false;
+
+	UPROPERTY(EditAnywhere,Category="HP")
+	int32 MaxHP = 100;
+
+	UPROPERTY(VisibleAnywhere,Category="HP")
+	int32 CurrentHP = MaxHP;
 };

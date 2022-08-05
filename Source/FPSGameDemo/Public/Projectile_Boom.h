@@ -6,6 +6,7 @@
 #include "Components/SphereComponent.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "PhysicsEngine/RadialForceComponent.h"
 #include "Projectile_Boom.generated.h"
 
 UCLASS()
@@ -33,5 +34,29 @@ public:
 	
 	UPROPERTY(VisibleAnywhere,Category=Projectile)
 	UProjectileMovementComponent* ProjectileMovementComponent;
+
+	UPROPERTY(VisibleAnywhere,Category=Projectile)
+	UParticleSystemComponent* BoomParticleComponent;
 	
+	UPROPERTY(EditAnywhere,Category=Projectile)
+	URadialForceComponent* RadialForceComponent;
+
+	UFUNCTION()
+	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit );
+
+	// 手榴弹爆炸最大时间
+	UPROPERTY(EditAnywhere,Category=LifeTime)
+	float ProjectileLife = 3.0f;
+	
+	// 特效删除时间
+	UPROPERTY(EditAnywhere,Category=LifeTime)
+	float ParticleDestroyTime = 2.0f;
+
+	UPROPERTY(EditAnywhere,Category=Projectile)
+	float Damage = 20.0f;
+	
+private:
+	FTimerHandle BoomTimeHandle;
+	
+	void Boom();
 };
