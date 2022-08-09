@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Net/UnrealNetwork.h"
 #include "Particles/ParticleSystem.h"
 #include "Particles/ParticleSystemComponent.h"
 
@@ -27,13 +28,8 @@ void UFireBoomComponent::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
-
-	IndicatorCount = UKismetMathLibrary::FFloor(PathLifeTime / TimeInterval);
 	
-	APawn* Owner = Cast<APawn>(GetOwner());
-	if(Owner == nullptr)return;
-	Owner->InputComponent->BindAction("FireBoom",IE_Pressed,this,&UFireBoomComponent::IndicatorLineOpen);
-	Owner->InputComponent->BindAction("FireBoom",IE_Released,this,&UFireBoomComponent::IndicatorLineClose);
+	IndicatorCount = UKismetMathLibrary::FFloor(PathLifeTime / TimeInterval);
 }
 
 
@@ -45,12 +41,19 @@ void UFireBoomComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	// ...
 
 	if(bDrawIndicatorLine == false)return;
-	DrawLine();
+	if(GetOwner()->GetLocalRole())
+	{
+		DrawLine();
+	}
+	else
+	{
+		UE_LOG(LogTemp,Warning,TEXT("No"));
+	}
 }
 
-void UFireBoomComponent::Init(USkeletalMeshComponent* GunToSet, TSubclassOf<AProjectile_Boom> ProjectileBoomToSet,UParticleSystem* IndicatorBeamParticleToSet)
+void UFireBoomComponent::Init(USkeletalMeshComponent* GunComponentToSet, TSubclassOf<AProjectile_Boom> ProjectileBoomToSet,UParticleSystem* IndicatorBeamParticleToSet)
 {
-	GunComponent = GunToSet;
+	GunComponent = GunComponentToSet;
 	ProjectileBoomClass = ProjectileBoomToSet;
 	IndicatorBeamParticle = IndicatorBeamParticleToSet;
 }
@@ -65,49 +68,43 @@ void UFireBoomComponent::IndicatorLineClose()
 	ClearIndicatorLine();
 	bDrawIndicatorLine = false;
 
-	FireBoom();
+	FireBoom(GunComponent,ProjectileBoomClass);
 }
 
 // 投掷手榴弹
-void UFireBoomComponent::FireBoom()
+void UFireBoomComponent::FireBoom_Implementation(USkeletalMeshComponent* GunComponentToSet, TSubclassOf<AProjectile_Boom> ProjectileBoomToSet)
 {
-	if(GunComponent == nullptr)
-	{
-		UE_LOG(LogTemp,Warning,TEXT("%s FireBoomComponent miss necessary"),*GetOwner()->GetName());
-		return;
-	}
-
 	APawn* Owner = Cast<APawn>(GetOwner());
 	if(Owner == nullptr)return;
-
-
-	FVector InitLocation = GunComponent->GetSocketLocation(FName("FirePoint"));
+	
 	FRotator InitRot = Owner->Controller->GetControlRotation();
 	AProjectile_Boom* CreateProjectileBoom = GetWorld()->SpawnActor<AProjectile_Boom>(
-		ProjectileBoomClass,
-		InitLocation,
+		ProjectileBoomToSet,
+		GunComponentToSet->GetSocketLocation("FirePoint"),
 		InitRot
 	);
 
 	FVector InitLocalVelocity = FVector(1000.0f,.0f,1000.0f);
+
+	// 防止空指针
+	if(CreateProjectileBoom == nullptr)return;
+	if(CreateProjectileBoom->ProjectileMovementComponent == nullptr)return;
+	
 	CreateProjectileBoom->ProjectileMovementComponent->SetVelocityInLocalSpace(InitLocalVelocity);
 }
 
 // 绘制投掷物投掷路线样条曲线
 void UFireBoomComponent::DrawLine()
 {
-	if(GunComponent == nullptr)
+	APawn* Owner = Cast<APawn>(GetOwner());
+	if(Owner == nullptr)
 	{
-		UE_LOG(LogTemp,Warning,TEXT("%s FireBoomComponent miss necessary"),*GetOwner()->GetName());
+		UE_LOG(LogTemp,Warning,TEXT("Owner miss necessary"));
 		return;
 	}
 
-	APawn* Owner = Cast<APawn>(GetOwner());
-	if(Owner == nullptr)return;
-
-	FVector InitLocation = GunComponent->GetSocketLocation(FName("FirePoint"));
+	FVector InitLocation = GunComponent->GetSocketLocation("FirePoint");
 	FRotator InitRot = Owner->Controller->GetControlRotation();
-	
 	FVector InitLocalVelocity = FVector(1000.0f,.0f,1000.0f);
 
 	// 计算手榴弹的变换组件
@@ -164,7 +161,6 @@ bool UFireBoomComponent::DrawPartLine(FVector StartLocation,FVector InitVelocity
 	if(bHit)return bHit;
 
 	UParticleSystemComponent* CreateBeamParticle;
-
 	// 对于上次创建好的样条曲线直接拿来改变光源位置使用即可，如果TArray内没有足够的样条曲线就创建一个新的
 	if(Times >= CreateBeamParticleArray.Num())
 	{

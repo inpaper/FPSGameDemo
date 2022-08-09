@@ -74,10 +74,12 @@ void AProjectile_Boom::Boom()
 	
 	BoomParticleComponent->Activate();
 
+	SetRootComponent(BoomParticleComponent);
 	CollisionMesh->SetNotifyRigidBodyCollision(false);
 	CollisionMesh->DestroyComponent();
 	MeshComponent->DestroyComponent();
 	
+	// BoomInServer();
 	RadialForceComponent->FireImpulse();
 	
 	// 炸弹只对玩家血量进行伤害
@@ -89,4 +91,9 @@ void AProjectile_Boom::Boom()
 		UDamageType::StaticClass(),
 		TArray<AActor*>()
 	);
+}
+
+void AProjectile_Boom::BoomInServer_Implementation()
+{
+	RadialForceComponent->FireImpulse();
 }

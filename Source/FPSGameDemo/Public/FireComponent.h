@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Projectile.h"
+// #include "MyCharacter.h"
 #include "Camera/CameraComponent.h"
 #include "Components/ActorComponent.h"
 #include "FireComponent.generated.h"
@@ -34,13 +34,13 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	UFUNCTION(BlueprintCallable,Category="Setup")
-	void Init(USkeletalMeshComponent* GunToSet,UCameraComponent* CameraToSet,TSubclassOf<AProjectile> ProjectileToSet);
+	void Init(TSubclassOf<class AProjectile> ProjectileToSet);
 	
-	UFUNCTION(BlueprintCallable,Category=Projectile)
-	void Fire();
+	UFUNCTION(Server,Reliable)
+	void Fire(TSubclassOf<class AProjectile> GetProject, FVector FireLocation,UCameraComponent* CameraComponent);
 
 	// 获取子弹发射方向
-	void GetFireDirection(FRotator &FireDirection);
+	void GetFireDirection(FVector FireLocation,UCameraComponent* CameraComponent,FRotator &FireDirection);
 	
 	UPROPERTY(EditDefaultsOnly,Category=Projectile)
 	float LaunchSpeed = 10000.0f;
@@ -53,9 +53,9 @@ public:
 private:
 	USkeletalMeshComponent* GunComponent;
 
-	UCameraComponent* CameraComponent;
+	// UCameraComponent* CameraComponent;
 
-	TSubclassOf<AProjectile> ProjectileClass;
+	TSubclassOf<class AProjectile> ProjectileClass;
 
 	// 攻击状态
 	EFireState FireState;

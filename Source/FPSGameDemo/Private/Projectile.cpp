@@ -3,7 +3,10 @@
 
 #include "Projectile.h"
 
+#include "MyCharacter.h"
+#include "MyPlayerState.h"
 #include "Components/SphereComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AProjectile::AProjectile()
@@ -43,9 +46,17 @@ void AProjectile::Tick(float DeltaTime)
 // 碰撞检测
 void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-
 	// 不处理击中地板的子弹
 	if(OtherActor->GetName() == TEXT("Floor"))return;
+
+	if(Cast<AMyCharacter>(OtherActor))
+	{
+		Destroy();
+		return;
+	}
+	
+	// TODO 如果子弹也需要应用伤害
+	// if(OtherActor != nullptr && OtherActor != this && OtherComp != nullptr && (OtherComp->IsSimulatingPhysics() || Cast<AMyCharacter>(OtherActor)))
 	
 	if(OtherActor != nullptr && OtherActor != this && OtherComp != nullptr && OtherComp->IsSimulatingPhysics())
 	{
@@ -56,6 +67,13 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 		{
 			UE_LOG(LogTemp,Error,TEXT("%s Actor %s Component Miss The Socket 'TargetCenter'"),*OtherActor->GetName(),*OtherComp->GetName());
 			Destroy();
+			return;
+		}
+
+		// 只在服务器处理碰撞带来的加分事件
+		if(GetLocalRole() != ROLE_Authority)
+		{
+			UE_LOG(LogTemp,Warning,TEXT("Not Server"));
 			return;
 		}
 		
@@ -71,6 +89,16 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 		{
 			// 击中靶心
 			UE_LOG(LogTemp,Warning,TEXT("击中靶心"));
+			if(SourcePlayer == nullptr)
+			{
+				UE_LOG(LogTemp,Warning,TEXT("??"));
+				Destroy();
+				return;
+			}
+			UE_LOG(LogTemp,Warning,TEXT("%s"),*SourcePlayer->GetName());
+			AMyPlayerState* DamageSourcePlayerState = Cast<AMyPlayerState>(SourcePlayer->GetPlayerState());
+			UE_LOG(LogTemp,Warning,TEXT("Score %d"),DamageSourcePlayerState->PlayerScore);
+			DamageSourcePlayerState->AddScore(1);
 		}
 		
 		Destroy();

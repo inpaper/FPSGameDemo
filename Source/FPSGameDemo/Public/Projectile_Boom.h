@@ -59,4 +59,7 @@ private:
 	FTimerHandle BoomTimeHandle;
 	
 	void Boom();
+
+	UFUNCTION(Server,Reliable)
+	void BoomInServer();
 };

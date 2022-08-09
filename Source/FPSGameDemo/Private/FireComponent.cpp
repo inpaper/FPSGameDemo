@@ -25,10 +25,6 @@ void UFireComponent::BeginPlay()
 	Super::BeginPlay();
 
 	// ...
-
-	APawn* Owner = Cast<APawn>(GetOwner());
-	if(Owner == nullptr)return;
-	Owner->InputComponent->BindAction("Fire",IE_Pressed,this,&UFireComponent::Fire);
 }
 
 
@@ -38,9 +34,7 @@ void UFireComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
 	// ...
-
-	if(GunComponent == nullptr || CameraComponent == nullptr)return;
-
+	
 	// 设置开枪的状态
 	if(FPlatformTime::Seconds() - RecordTime < ReloadTime)
 	{
@@ -52,38 +46,33 @@ void UFireComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 	}
 }
 
-void UFireComponent::Init(USkeletalMeshComponent* GunToSet,UCameraComponent* CameraToSet,TSubclassOf<AProjectile> ProjectileToSet)
+// TODO 暂时不适用该方法，直接在MyCharacter中设置投掷物类型，看后续蓝图是否会更新掉
+void UFireComponent::Init(TSubclassOf<AProjectile> ProjectileToSet)
 {
-	GunComponent = GunToSet;
 	ProjectileClass = ProjectileToSet;
-	CameraComponent = CameraToSet;
 }
 
 // 按下开火键执行该操作
-void UFireComponent::Fire()
+void UFireComponent::Fire_Implementation(TSubclassOf<class AProjectile> GetProject,FVector FireLocation,UCameraComponent* CameraComponent)
 {
-	if(GunComponent == nullptr || CameraComponent == nullptr)
-	{
-		UE_LOG(LogTemp,Warning,TEXT("%s FireComponent miss necessary"),*GetOwner()->GetName());
-		return;
-	}
-
+	UE_LOG(LogTemp,Warning,TEXT("CameraComponent %s"),*CameraComponent->GetOwner()->GetName());
+	
 	if(FireState == EFireState::Reload)return;
 	
 	FRotator OffsetRot;
-	GetFireDirection(OffsetRot);
+	GetFireDirection(FireLocation,CameraComponent,OffsetRot);
 	
 	AProjectile* CreateProjectile = GetWorld()->SpawnActor<AProjectile>(
-		ProjectileClass,
-		GunComponent->GetSocketLocation(FName("FirePoint")),
+		GetProject,
+		FireLocation,
 		OffsetRot
 		);
 
-	RecordTime = FPlatformTime::Seconds();
+	CreateProjectile->SourcePlayer = Cast<AMyCharacter>(CameraComponent->GetOwner());
 }
 
 // 通过计算摄像头的位置和摄像头正方向确定开始与结束位置，生成射线，将射线击中的点作为射击的点，从子弹初始位置看向击中位置获取发射方向。
-void UFireComponent::GetFireDirection(FRotator &FireDirection)
+void UFireComponent::GetFireDirection(FVector FireLocation,UCameraComponent* CameraComponent,FRotator &FireDirection)
 {
 	FVector StartLocation = CameraComponent->GetComponentLocation();
 	FVector EndLocation = StartLocation + CameraComponent->GetForwardVector() * LineLength;
@@ -97,7 +86,7 @@ void UFireComponent::GetFireDirection(FRotator &FireDirection)
 	}
 
 	// 发射位置默认为枪位置，计算中使用摄像机位置，所以需要在结果处补充这个偏差。
-	FVector GunCameraOffset = StartLocation - GunComponent->GetSocketLocation(FName("FirePoint"));
+	FVector GunCameraOffset = StartLocation - FireLocation;
 
 	FireDirection = UKismetMathLibrary::FindLookAtRotation(StartLocation,HitLocation + GunCameraOffset);
 }

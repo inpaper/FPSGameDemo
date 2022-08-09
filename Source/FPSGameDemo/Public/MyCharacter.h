@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FireBoomComponent.h"
 #include "FireComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/SpotLightComponent.h"
@@ -20,6 +21,12 @@ class FPSGAMEDEMO_API AMyCharacter : public ACharacter
 	
 	UPROPERTY(EditAnywhere,Category="Camera")
 	USpringArmComponent* CameraSpringArmComponent;
+	
+	void FireBullet();
+
+	void FireBoomIndicatorOpen();
+	void FireBoomIndicatorClose();
+	
 public:
 	// Sets default values for this character's properties
 	AMyCharacter();
@@ -35,11 +42,23 @@ public:
 	UPROPERTY(BlueprintReadWrite,EditAnywhere,Category="Gun")
 	USkeletalMeshComponent* GunComponent;
 
-	// 将该定义写在ActorComponent子类上，每次打开都需要重新设置，因此将该定义写入Character类中
-	UPROPERTY(EditDefaultsOnly,Category=Projectile)
+	// TODO 将该定义写在ActorComponent子类上，每次打开都需要重新设置，因此将该定义写入Character类中
+	UPROPERTY(EditDefaultsOnly,Category=Fire)
 	TSubclassOf<class AProjectile> ProjectileClass;
 	
-	UPROPERTY(EditAnywhere,Category="Camera")
+	UPROPERTY(EditDefaultsOnly,Category=FireBoom)
+	TSubclassOf<class AProjectile_Boom> ProjectileBoomClass;
+
+	UPROPERTY(EditDefaultsOnly,Category=FireBoom)
+	UParticleSystem* IndicatorBeamParticle;
+
+	UPROPERTY(BlueprintReadOnly,EditAnywhere,Category=Fire)
+	UFireComponent* FireComponent;
+
+	UPROPERTY(BlueprintReadOnly,EditAnywhere,Category=FireBoom)
+	UFireBoomComponent* FireBoomComponent;
+	
+	UPROPERTY(EditAnywhere,Category=Camera)
 	float StartCameraTurnPitch = 15.0f;
 	
 protected:

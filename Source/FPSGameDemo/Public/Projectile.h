@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "MyCharacter.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "PhysicsEngine/RadialForceComponent.h"
@@ -32,6 +33,8 @@ public:
 	UPROPERTY(VisibleAnywhere,Category=Projectile)
 	UProjectileMovementComponent* ProjectileMovementComponent;
 
+	AMyCharacter* SourcePlayer;
+	
 	UPROPERTY(EditAnywhere,Category=Projectile)
 	float HitForceBonus = 100.0f;
 	

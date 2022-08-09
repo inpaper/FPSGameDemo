@@ -33,19 +33,21 @@ AMyCharacter::AMyCharacter()
 	
 	CameraSpringArmComponent->bUsePawnControlRotation = true;
 	CameraComponent->AttachTo(CameraSpringArmComponent);
+
+	FireComponent = CreateDefaultSubobject<UFireComponent>("FireComponent");
+	FireBoomComponent = CreateDefaultSubobject<UFireBoomComponent>("FireBoomComponent");
 }
 
 // Called when the game starts or when spawned
 void AMyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	if(CameraSpringArmComponent)
+	if(CameraSpringArmComponent != nullptr)
 	{
 		AddControllerPitchInput(StartCameraTurnPitch);
 	}
-
 	// 使枪的模型贴合人物手部骨骼点，并使SpotLight贴合到枪的射击口
-	if(GunComponent)
+	if(GunComponent != nullptr)
 	{
 		GunComponent->AttachToComponent(GetMesh(), FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("GunPoint"));
 		if(GunSpotLightComponent)
@@ -53,7 +55,6 @@ void AMyCharacter::BeginPlay()
 			GunSpotLightComponent->AttachToComponent(GunComponent, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, true), TEXT("LightPoint"));
 		}
 	}
-
 }
 
 // Called every frame
@@ -79,6 +80,29 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+
+	PlayerInputComponent->BindAction("Fire",IE_Pressed,this,&AMyCharacter::FireBullet);
+	
+	PlayerInputComponent->BindAction("FireBoom",IE_Pressed,this,&AMyCharacter::FireBoomIndicatorOpen);
+	PlayerInputComponent->BindAction("FireBoom",IE_Released,this,&AMyCharacter::FireBoomIndicatorClose);
+}
+
+void AMyCharacter::FireBullet()
+{
+	FVector FireLocation = GunComponent->GetSocketLocation(FName("FirePoint"));
+	FireComponent->Fire(ProjectileClass,FireLocation,CameraComponent);
+}
+
+void AMyCharacter::FireBoomIndicatorOpen()
+{
+	// 信息从客户端发送到服务端，然后变量自动复制
+	FireBoomComponent->Init(GunComponent,ProjectileBoomClass,IndicatorBeamParticle);
+	FireBoomComponent->IndicatorLineOpen();
+}
+
+void AMyCharacter::FireBoomIndicatorClose()
+{
+	FireBoomComponent->IndicatorLineClose();
 }
 
 // 更改当前是否可以八方向移动的情况

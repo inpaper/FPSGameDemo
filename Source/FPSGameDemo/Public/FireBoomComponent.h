@@ -24,15 +24,15 @@ protected:
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	
+	void Init(USkeletalMeshComponent* GunComponentToSet,TSubclassOf<class AProjectile_Boom> ProjectileBoomToSet,UParticleSystem* IndicatorBeamParticleToSet);
 
-	UFUNCTION(BlueprintCallable,Category=Projectile)
-	void Init(USkeletalMeshComponent* GunToSet,TSubclassOf<AProjectile_Boom> ProjectileBoomToSet,UParticleSystem* IndicatorBeamParticleToSet);
-
-	// 控制手榴弹指示线开启关闭
+	// 客户端控制手榴弹指示线开启关闭
 	void IndicatorLineOpen();
 	void IndicatorLineClose();
-	
-	void FireBoom();
+
+	UFUNCTION(Server,Reliable)
+	void FireBoom(USkeletalMeshComponent* GunComponentToSet,TSubclassOf<AProjectile_Boom> ProjectileBoomToSet);
 
 	// 指示线总长
 	UPROPERTY(EditAnywhere,Category=IndicatorLine)
@@ -58,8 +58,12 @@ private:
 	void ClearIndicatorLine();
 	
 	USkeletalMeshComponent* GunComponent;
+	
 	// 手榴弹
-	TSubclassOf<AProjectile_Boom> ProjectileBoomClass;
+	TSubclassOf<class AProjectile_Boom> ProjectileBoomClass;
+
+	// 组成一段样条曲线的粒子
+	UParticleSystem* IndicatorBeamParticle;
 
 	//是否绘制手榴弹指示线
 	bool bDrawIndicatorLine = false;
@@ -67,9 +71,6 @@ private:
 	// 指示线样条曲线段数
 	int IndicatorCount;
 	
-	// 组成一段样条曲线的粒子
-	UParticleSystem* IndicatorBeamParticle;
-
 	// 存放创建出来的粒子TArray
 	TArray<UParticleSystemComponent*> CreateBeamParticleArray;
 };
