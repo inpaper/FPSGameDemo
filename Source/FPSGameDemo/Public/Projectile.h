@@ -6,7 +6,6 @@
 #include "MyCharacter.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/ProjectileMovementComponent.h"
-#include "PhysicsEngine/RadialForceComponent.h"
 #include "Projectile.generated.h"
 
 class USphereComponent;
@@ -33,11 +32,13 @@ public:
 	UPROPERTY(VisibleAnywhere,Category=Projectile)
 	UProjectileMovementComponent* ProjectileMovementComponent;
 
+	// 保存投射出来的玩家，击中物体后给对应玩家加分
 	AMyCharacter* SourcePlayer;
 	
 	UPROPERTY(EditAnywhere,Category=Projectile)
 	float HitForceBonus = 100.0f;
-	
+
+	// 碰撞事件
 	UFUNCTION()
 	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit );
 };

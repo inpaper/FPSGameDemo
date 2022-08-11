@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "ShootingPawnTransform.generated.h"
 
+// 仅仅用于标定用户在传送到靶场后的位置定位Actor
 UCLASS()
 class FPSGAMEDEMO_API AShootingPawnTransform : public AActor
 {

@@ -2,8 +2,7 @@
 
 
 #include "FireBoomComponent.h"
-
-// #include "K2Node_AddComponent.h"
+#include "FPSGameDemo/FPSGameDemoGameModeBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -74,6 +73,18 @@ void UFireBoomComponent::IndicatorLineClose()
 // 投掷手榴弹
 void UFireBoomComponent::FireBoom_Implementation(USkeletalMeshComponent* GunComponentToSet, TSubclassOf<AProjectile_Boom> ProjectileBoomToSet)
 {
+	AFPSGameDemoGameModeBase* GameMode = Cast<AFPSGameDemoGameModeBase>(UGameplayStatics::GetGameMode(this));
+	if(GameMode == nullptr)
+	{
+		UE_LOG(LogTemp,Warning,TEXT("GameMode Error"));
+		return;
+	}
+	if(!GameMode->bFireAbility)
+	{
+		UE_LOG(LogTemp,Warning,TEXT("Controller Can not Fire"));
+		return;
+	}
+	
 	APawn* Owner = Cast<APawn>(GetOwner());
 	if(Owner == nullptr)return;
 	

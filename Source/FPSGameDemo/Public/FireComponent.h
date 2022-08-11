@@ -3,11 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-// #include "MyCharacter.h"
 #include "Camera/CameraComponent.h"
 #include "Components/ActorComponent.h"
 #include "FireComponent.generated.h"
 
+// 控制射击频率的状态
 UENUM()
 enum class EFireState:uint8
 {
@@ -52,8 +52,6 @@ public:
 	float ReloadTime = 0.3f;
 private:
 	USkeletalMeshComponent* GunComponent;
-
-	// UCameraComponent* CameraComponent;
 
 	TSubclassOf<class AProjectile> ProjectileClass;
 

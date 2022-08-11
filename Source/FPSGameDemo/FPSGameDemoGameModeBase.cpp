@@ -2,8 +2,8 @@
 
 
 #include "FPSGameDemoGameModeBase.h"
-
 #include "MyCharacter.h"
+#include "MyGameInstance.h"
 #include "MyPlayerController.h"
 #include "MyPlayerState.h"
 #include "ShootingPawnTransform.h"
@@ -19,10 +19,10 @@ void AFPSGameDemoGameModeBase::PostLogin(APlayerController* NewPlayer)
 		
 		// TODO 无法找到所有的开始点 
 		UGameplayStatics::GetAllActorsOfClass(this,APlayerStart::StaticClass(),GetGameStarts);
-		UE_LOG(LogTemp,Warning,TEXT("GameStart have %i"),GetGameStarts.Num());
+		UE_LOG(LogTemp,Warning,TEXT("GameStart have %i Points"),GetGameStarts.Num());
 		
 		UGameplayStatics::GetAllActorsOfClass(this,AShootingPawnTransform::StaticClass(),GetShootingTransform);
-		UE_LOG(LogTemp,Warning,TEXT("TestLoc have %i"),GetShootingTransform.Num());
+		UE_LOG(LogTemp,Warning,TEXT("GetShootingTransform have %i Points"),GetShootingTransform.Num());
 		
 		AMyPlayerController* NewPlayerController = Cast<AMyPlayerController>(NewPlayer);
 		AllPlayerController.AddUnique(NewPlayerController);
@@ -34,10 +34,22 @@ void AFPSGameDemoGameModeBase::PostLogin(APlayerController* NewPlayer)
 			return;
 		}
 		MyPlayerState->InitPlayerNumber(AllPlayerController.Num());
+
+		// 切换服务器游戏状态
+		UMyGameInstance* ServerGameInstance = Cast<UMyGameInstance>(GetGameInstance());
+		if(ServerGameInstance->IsCurrentState(EGameState::MainMenu))
+		{
+			if(!ServerGameInstance->TransitionToState(EGameState::WaitingPlayer))
+			{
+				UE_LOG(LogTemp,Warning,TEXT("TransitionToState WaitingPlayer Error"));
+			}
+		}
 		
 		// 执行拥有该控制器的客户端需要执行的方法
 		NewPlayerController->OwnerClientPostLogin();
-
+		
+		MyPlayerState->ScoreUpdate();
+		
 		// 通知所有玩家控制器，当前玩家数目
 		for (auto PlayerController : AllPlayerController)
 		{
@@ -66,29 +78,17 @@ void AFPSGameDemoGameModeBase::RespawnPlayerPawn_Implementation(APlayerControlle
 	PlayerController->Possess(CreatePawn);
 }
 
-void AFPSGameDemoGameModeBase::RefreshPlayerInfoAndNotify()
+void AFPSGameDemoGameModeBase::ClearPlayerScore()
 {
-	UE_LOG(LogTemp,Warning,TEXT("RefreshPlayerInfoAndNotify"));
-	AllGameStates.Empty();
-
-	TArray<FPlayerInfo> PlayerInfos;
-	
-	for (auto GetPlayerController : AllPlayerController)
+	for (auto PlayerController : AllPlayerController)
 	{
-		UE_LOG(LogTemp,Warning,TEXT("InJob"));
-		AMyPlayerState* GetPlayerState = GetPlayerController->GetPlayerState<AMyPlayerState>();
-
-		// TODO 即使使用了结构体，传过来的数据还是0 不清楚原因在哪里 先搁置
-		FPlayerInfo NewPlayerInfo;
-		NewPlayerInfo.Name = GetPlayerState->PlayerNumber;
-		NewPlayerInfo.Score = GetPlayerState->PlayerScore;
-		
-		PlayerInfos.Add(NewPlayerInfo);
-	}
-
-	for (auto GetPlayerController : AllPlayerController)
-	{
-		UE_LOG(LogTemp,Warning,TEXT("InJob2"));
-		GetPlayerController->RefreshPlayerInfo(PlayerInfos);
+		AMyPlayerState* GetPlayerState = PlayerController->GetPlayerState<AMyPlayerState>();
+		GetPlayerState->ResetScore();
 	}
 }
+
+void AFPSGameDemoGameModeBase::ChangeFireAbility(bool GetFireAbility)
+{
+	bFireAbility = GetFireAbility;
+}
+

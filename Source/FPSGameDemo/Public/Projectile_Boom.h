@@ -57,9 +57,11 @@ public:
 	
 private:
 	FTimerHandle BoomTimeHandle;
-	
+
+	// 炸弹在各个客户端的表现
 	void Boom();
 
+	// TODO 炸弹在服务器执行的逻辑，如血量计算等
 	UFUNCTION(Server,Reliable)
 	void BoomInServer();
 };

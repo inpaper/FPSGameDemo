@@ -24,13 +24,15 @@ protected:
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	
+
+	// 初始化信息
 	void Init(USkeletalMeshComponent* GunComponentToSet,TSubclassOf<class AProjectile_Boom> ProjectileBoomToSet,UParticleSystem* IndicatorBeamParticleToSet);
 
 	// 客户端控制手榴弹指示线开启关闭
 	void IndicatorLineOpen();
 	void IndicatorLineClose();
 
+	// 投掷手榴弹
 	UFUNCTION(Server,Reliable)
 	void FireBoom(USkeletalMeshComponent* GunComponentToSet,TSubclassOf<AProjectile_Boom> ProjectileBoomToSet);
 

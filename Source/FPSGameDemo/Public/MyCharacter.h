@@ -21,7 +21,7 @@ class FPSGAMEDEMO_API AMyCharacter : public ACharacter
 	
 	UPROPERTY(EditAnywhere,Category="Camera")
 	USpringArmComponent* CameraSpringArmComponent;
-
+	
 	UFUNCTION(BlueprintCallable,Category="FireBullet")
 	void FireBullet();
 
@@ -45,13 +45,15 @@ public:
 	UPROPERTY(BlueprintReadWrite,EditAnywhere,Category="Gun")
 	USkeletalMeshComponent* GunComponent;
 
-	// TODO 将该定义写在ActorComponent子类上，每次打开都需要重新设置，因此将该定义写入Character类中
+	// 子弹生成物
 	UPROPERTY(EditDefaultsOnly,Category=Fire)
 	TSubclassOf<class AProjectile> ProjectileClass;
-	
+
+	// 炸弹生成物
 	UPROPERTY(EditDefaultsOnly,Category=FireBoom)
 	TSubclassOf<class AProjectile_Boom> ProjectileBoomClass;
 
+	// 指示线粒子系统
 	UPROPERTY(EditDefaultsOnly,Category=FireBoom)
 	UParticleSystem* IndicatorBeamParticle;
 
@@ -83,13 +85,10 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	
 private:
 	// 控制八方向移动，限制只有X和Y不能同时输入
 	bool bRunEight = false;
-
-	UBoolProperty* BRunEight;
-
+	
 	// 判断是否当前正在按下X或者Y
 	bool bRunX = false;
 	bool bRunY = false;

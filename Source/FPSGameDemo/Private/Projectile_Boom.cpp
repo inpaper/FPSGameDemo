@@ -2,7 +2,6 @@
 
 
 #include "Projectile_Boom.h"
-
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
 
@@ -83,6 +82,7 @@ void AProjectile_Boom::Boom()
 	RadialForceComponent->FireImpulse();
 	
 	// 炸弹只对玩家血量进行伤害
+	// TODO 目前还没想好炸弹的具体游戏逻辑
 	UGameplayStatics::ApplyRadialDamage(
 		this,
 		Damage,

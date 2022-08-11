@@ -2,9 +2,9 @@
 
 
 #include "FireComponent.h"
-
 #include "Projectile.h"
 #include "Camera/CameraComponent.h"
+#include "FPSGameDemo/FPSGameDemoGameModeBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
@@ -55,6 +55,18 @@ void UFireComponent::Init(TSubclassOf<AProjectile> ProjectileToSet)
 // 按下开火键执行该操作
 void UFireComponent::Fire_Implementation(TSubclassOf<class AProjectile> GetProject,FVector FireLocation,UCameraComponent* CameraComponent)
 {
+	AFPSGameDemoGameModeBase* GameMode = Cast<AFPSGameDemoGameModeBase>(UGameplayStatics::GetGameMode(this));
+	if(GameMode == nullptr)
+	{
+		UE_LOG(LogTemp,Warning,TEXT("GameMode Error"));
+		return;
+	}
+	if(!GameMode->bFireAbility)
+	{
+		UE_LOG(LogTemp,Warning,TEXT("Controller Can not Fire"));
+		return;
+	}
+	
 	UE_LOG(LogTemp,Warning,TEXT("CameraComponent %s"),*CameraComponent->GetOwner()->GetName());
 	
 	if(FireState == EFireState::Reload)return;
