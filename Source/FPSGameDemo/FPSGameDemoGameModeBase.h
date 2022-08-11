@@ -30,5 +30,15 @@ public:
 
 	TArray<AActor*> GetGameStarts;
 
+	TArray<AActor*> GetShootingTransform;
+
 	TArray<AMyPlayerState*> AllGameStates;
+
+	// 传送到靶场的等待时间
+	UPROPERTY(EditAnywhere)
+	int32 PassWaitTime = 5;
+
+	// 到靶场后游戏正式开始的等待时间
+	UPROPERTY(EditAnywhere)
+	int32 StartGameWaitTime = 3;
 };

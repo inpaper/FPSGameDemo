@@ -81,8 +81,10 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
+	// 电脑端使用
 	PlayerInputComponent->BindAction("Fire",IE_Pressed,this,&AMyCharacter::FireBullet);
-	
+
+	// 电脑端使用
 	PlayerInputComponent->BindAction("FireBoom",IE_Pressed,this,&AMyCharacter::FireBoomIndicatorOpen);
 	PlayerInputComponent->BindAction("FireBoom",IE_Released,this,&AMyCharacter::FireBoomIndicatorClose);
 }
@@ -118,46 +120,50 @@ void AMyCharacter::StopRunEight()
 
 void AMyCharacter::MoveForward(float Value)
 {
-	if(GetController())
-	{
-		if(Value == 0.0f)
-		{
-			bRunY = false;
-			return;
-		}
-
-		// 限制八方向位移
-		if(bRunX && !bRunEight)return;
-		bRunY = true;
-		
-		const FRotator Rotation = GetController()->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-		
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		AddMovementInput(Direction, Value);
-	}
+	YValue = Value;
+	Move();
+	// if(GetController())
+	// {
+	// 	if(Value == 0.0f)
+	// 	{
+	// 		bRunY = false;
+	// 		return;
+	// 	}
+	//
+	// 	// 限制八方向位移
+	// 	if(bRunX && !bRunEight)return;
+	// 	bRunY = true;
+	// 	
+	// 	const FRotator Rotation = GetController()->GetControlRotation();
+	// 	const FRotator YawRotation(0, Rotation.Yaw, 0);
+	// 	
+	// 	const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+	// 	AddMovementInput(Direction, Value);
+	// }
 }
 
 void AMyCharacter::MoveRight(float Value)
 {
-	if ( GetController())
-	{
-		if(Value == 0.0f)
-		{
-			bRunX = false;
-			return;
-		}
-
-		// 限制八方向位移
-		if(bRunY && !bRunEight)return;
-		bRunX = true;
-		
-		const FRotator Rotation = GetController()->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-		
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-		AddMovementInput(Direction, Value);
-	}
+	XValue = Value;
+	Move();
+	// if ( GetController())
+	// {
+	// 	if(Value == 0.0f)
+	// 	{
+	// 		bRunX = false;
+	// 		return;
+	// 	}
+	//
+	// 	// 限制八方向位移
+	// 	if(bRunY && !bRunEight)return;
+	// 	bRunX = true;
+	// 	
+	// 	const FRotator Rotation = GetController()->GetControlRotation();
+	// 	const FRotator YawRotation(0, Rotation.Yaw, 0);
+	// 	
+	// 	const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+	// 	AddMovementInput(Direction, Value);
+	// }
 }
 
 float AMyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -176,6 +182,28 @@ float AMyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEve
 
 	return GetDamage;
 }
+
+void AMyCharacter::Move()
+{
+	if (!GetController())return;
+	if(XValue == 0.0f && YValue == 0.0f)return;
+	
+	bool isX = FMath::Abs(XValue) > FMath::Abs(YValue);
+	
+	const FRotator Rotation = GetController()->GetControlRotation();
+	const FRotator YawRotation(0, Rotation.Yaw, 0);
+	if(isX || bRunEight)
+	{
+		const FVector DirectionX = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+		AddMovementInput(DirectionX, XValue);
+	}
+	if(!isX || bRunEight)
+	{
+		const FVector DirectionY = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		AddMovementInput(DirectionY, YValue);
+	}
+}
+
 
 
 

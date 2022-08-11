@@ -21,10 +21,13 @@ class FPSGAMEDEMO_API AMyCharacter : public ACharacter
 	
 	UPROPERTY(EditAnywhere,Category="Camera")
 	USpringArmComponent* CameraSpringArmComponent;
-	
+
+	UFUNCTION(BlueprintCallable,Category="FireBullet")
 	void FireBullet();
 
+	UFUNCTION(BlueprintCallable,Category="FireBoom")
 	void FireBoomIndicatorOpen();
+	UFUNCTION(BlueprintCallable,Category="FireBoom")
 	void FireBoomIndicatorClose();
 	
 public:
@@ -65,8 +68,10 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	void Move();
+	
+	float XValue,YValue;
 	void MoveForward(float Value);
-
 	void MoveRight(float Value);
 
 	// 更改当前是否可以八方向移动的情况。

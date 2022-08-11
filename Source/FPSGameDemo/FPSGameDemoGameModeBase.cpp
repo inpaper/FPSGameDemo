@@ -6,6 +6,7 @@
 #include "MyCharacter.h"
 #include "MyPlayerController.h"
 #include "MyPlayerState.h"
+#include "ShootingPawnTransform.h"
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -19,7 +20,10 @@ void AFPSGameDemoGameModeBase::PostLogin(APlayerController* NewPlayer)
 		// TODO 无法找到所有的开始点 
 		UGameplayStatics::GetAllActorsOfClass(this,APlayerStart::StaticClass(),GetGameStarts);
 		UE_LOG(LogTemp,Warning,TEXT("GameStart have %i"),GetGameStarts.Num());
-
+		
+		UGameplayStatics::GetAllActorsOfClass(this,AShootingPawnTransform::StaticClass(),GetShootingTransform);
+		UE_LOG(LogTemp,Warning,TEXT("TestLoc have %i"),GetShootingTransform.Num());
+		
 		AMyPlayerController* NewPlayerController = Cast<AMyPlayerController>(NewPlayer);
 		AllPlayerController.AddUnique(NewPlayerController);
 		// 保证玩家名称序号从1开始
@@ -33,6 +37,12 @@ void AFPSGameDemoGameModeBase::PostLogin(APlayerController* NewPlayer)
 		
 		// 执行拥有该控制器的客户端需要执行的方法
 		NewPlayerController->OwnerClientPostLogin();
+
+		// 通知所有玩家控制器，当前玩家数目
+		for (auto PlayerController : AllPlayerController)
+		{
+			PlayerController->NotifyPlayerSum(AllPlayerController.Num());
+		}
 	}
 }
 
