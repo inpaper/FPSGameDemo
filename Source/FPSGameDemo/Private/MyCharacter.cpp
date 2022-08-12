@@ -2,8 +2,13 @@
 
 
 #include "FPSGameDemo/Public/MyCharacter.h"
+
+#include "MyPlayerController.h"
+#include "Projectile.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 // Sets default values
 AMyCharacter::AMyCharacter()
@@ -91,8 +96,38 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 void AMyCharacter::FireBullet()
 {
 	FVector FireLocation = GunComponent->GetSocketLocation(FName("FirePoint"));
-	FireComponent->Fire(ProjectileClass,FireLocation,CameraComponent);
+	FRotator FireRotator;
+	CalculateFireRotator(FireLocation,FireRotator);
+	UE_LOG(LogTemp,Warning,TEXT("FireLocation %s"),*FireLocation.ToString());
+	UE_LOG(LogTemp,Warning,TEXT("FireRotator %s"),*FireRotator.ToString());
+
+	FireComponent->Fire(ProjectileClass,FireLocation,FireRotator);
 }
+
+void AMyCharacter::CalculateFireRotator(const FVector FireLocation,FRotator& FireRotator)
+{
+	AMyPlayerController* PlayerController = Cast<AMyPlayerController>(GetController());
+	if(PlayerController == nullptr)return;
+
+	int SizeX,SizeY;
+	PlayerController->GetViewportSize(SizeX,SizeY);
+	
+	float AimX,AimY;
+	AimX = SizeX * AimPercentX;
+	AimY = SizeY * AimPercentY;
+
+	FVector WorldLocation,WorldDirection;
+	// 服务器上使用DeprojectScreenPositionToWorld会因为获取不到ULocalPlayer而输出位置为0
+	// 因此DeprojectScreenPositionToWorld在客户端进行计算
+	// 将屏幕位置转换为场景空间
+	PlayerController->DeprojectScreenPositionToWorld(AimX,AimY,WorldLocation,WorldDirection);
+	
+	FVector HitLocation;
+	HitLocation = WorldLocation + WorldDirection * FireLength;
+
+	FireRotator = UKismetMathLibrary::FindLookAtRotation(FireLocation,HitLocation);
+}
+
 
 void AMyCharacter::FireBoomIndicatorOpen()
 {

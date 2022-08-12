@@ -33,17 +33,12 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	UFUNCTION(BlueprintCallable,Category="Setup")
-	void Init(TSubclassOf<class AProjectile> ProjectileToSet);
+	// Deprecated 弃用该方法,直接在MyCharacter中设置投掷物类型
+	// UFUNCTION(BlueprintCallable,Category="Setup")
+	// void Init(TSubclassOf<class AProjectile> ProjectileToSet);
 	
 	UFUNCTION(Server,Reliable)
-	void Fire(TSubclassOf<class AProjectile> GetProject, FVector FireLocation,UCameraComponent* CameraComponent);
-
-	// 获取子弹发射方向
-	void GetFireDirection(FVector FireLocation,UCameraComponent* CameraComponent,FRotator &FireDirection);
-	
-	UPROPERTY(EditDefaultsOnly,Category=Projectile)
-	float LaunchSpeed = 10000.0f;
+	void Fire(TSubclassOf<class AProjectile> GetProject,FVector FireLocation,FRotator FireDirection);
 
 	UPROPERTY(EditDefaultsOnly,Category=Projectile)
 	float LineLength = 10000.0f;
@@ -51,13 +46,12 @@ public:
 	UPROPERTY(EditAnywhere,Category=Aim)
 	float ReloadTime = 0.3f;
 private:
-	USkeletalMeshComponent* GunComponent;
-
-	TSubclassOf<class AProjectile> ProjectileClass;
-
 	// 攻击状态
 	EFireState FireState;
 	
 	// 记录时间
 	double RecordTime = 0.0f;
+	
+	// Deprecated 弃用该方法，转而使用屏幕位置生成发射点位，获取子弹发射方向
+	void GetFireDirection(FVector FireLocation,UCameraComponent* CameraComponent,FRotator &FireDirection);
 };

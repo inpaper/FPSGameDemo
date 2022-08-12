@@ -25,6 +25,11 @@ class FPSGAMEDEMO_API AMyCharacter : public ACharacter
 	UFUNCTION(BlueprintCallable,Category="FireBullet")
 	void FireBullet();
 
+	// 服务器上使用DeprojectScreenPositionToWorld会因为获取不到ULocalPlayer而输出位置为0
+	// 因此DeprojectScreenPositionToWorld在客户端进行计算
+	// TODO 但因为发射位置和发射旋转都在客户端计算，会有作弊的可能性吧？
+	void CalculateFireRotator(const FVector FireLocation,FRotator& FireRotator);
+
 	UFUNCTION(BlueprintCallable,Category="FireBoom")
 	void FireBoomIndicatorOpen();
 	UFUNCTION(BlueprintCallable,Category="FireBoom")
@@ -98,4 +103,15 @@ private:
 
 	UPROPERTY(VisibleAnywhere,Category="HP")
 	int32 CurrentHP = MaxHP;
+
+	// 根据瞄准点确定
+	UPROPERTY(EditDefaultsOnly,Category=Fire)
+	float AimPercentX = 0.5f;
+
+	UPROPERTY(EditDefaultsOnly,Category=Fire)
+	float AimPercentY = 0.3f;
+	
+	// 经试验，以300m外的集中距离发射角度发射子弹，感觉最合理
+	UPROPERTY(EditDefaultsOnly,Category=Fire)
+	int FireLength = 3000;
 };

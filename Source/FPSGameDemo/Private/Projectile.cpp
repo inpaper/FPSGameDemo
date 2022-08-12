@@ -4,6 +4,7 @@
 #include "Projectile.h"
 #include "MyCharacter.h"
 #include "MyPlayerState.h"
+#include "TargetScoreLogit.h"
 #include "Components/SphereComponent.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -90,10 +91,24 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 			UE_LOG(LogTemp,Warning,TEXT("击中靶心"));
 			if(SourcePlayer == nullptr)
 			{
-				UE_LOG(LogTemp,Warning,TEXT("??"));
+				UE_LOG(LogTemp,Warning,TEXT("%s Projectile No SourcePlayer"),*GetName());
 				Destroy();
 				return;
 			}
+
+			// 只有第一个击中靶心的才会加分
+			UActorComponent* TargetComponent = OtherActor->GetComponentByClass(UTargetScoreLogit::StaticClass());
+			if(TargetComponent == nullptr)
+			{
+				UE_LOG(LogTemp,Warning,TEXT("%s HitActor Miss UTargetScoreLogit"),*GetName());
+				Destroy();
+				return;
+			}
+			UTargetScoreLogit* TargetScoreLogitComponent = Cast<UTargetScoreLogit>(TargetComponent);
+			
+			if(TargetScoreLogitComponent->bHit)return;
+			TargetScoreLogitComponent->bHit = true;
+
 			UE_LOG(LogTemp,Warning,TEXT("%s"),*SourcePlayer->GetName());
 			AMyPlayerState* DamageSourcePlayerState = Cast<AMyPlayerState>(SourcePlayer->GetPlayerState());
 			UE_LOG(LogTemp,Warning,TEXT("Score %d"),DamageSourcePlayerState->PlayerScore);

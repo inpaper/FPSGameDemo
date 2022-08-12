@@ -46,14 +46,14 @@ void UFireComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 	}
 }
 
-// TODO 暂时不适用该方法，直接在MyCharacter中设置投掷物类型，看后续蓝图是否会更新掉
-void UFireComponent::Init(TSubclassOf<AProjectile> ProjectileToSet)
-{
-	ProjectileClass = ProjectileToSet;
-}
+// 暂时不适用该方法，直接在MyCharacter中设置投掷物类型，看后续蓝图是否会更新掉
+// void UFireComponent::Init(TSubclassOf<AProjectile> ProjectileToSet)
+// {
+// 	ProjectileClass = ProjectileToSet;
+// }
 
 // 按下开火键执行该操作
-void UFireComponent::Fire_Implementation(TSubclassOf<class AProjectile> GetProject,FVector FireLocation,UCameraComponent* CameraComponent)
+void UFireComponent::Fire_Implementation(TSubclassOf<class AProjectile> GetProject,FVector FireLocation,FRotator FireDirection)
 {
 	AFPSGameDemoGameModeBase* GameMode = Cast<AFPSGameDemoGameModeBase>(UGameplayStatics::GetGameMode(this));
 	if(GameMode == nullptr)
@@ -67,22 +67,19 @@ void UFireComponent::Fire_Implementation(TSubclassOf<class AProjectile> GetProje
 		return;
 	}
 	
-	UE_LOG(LogTemp,Warning,TEXT("CameraComponent %s"),*CameraComponent->GetOwner()->GetName());
-	
 	if(FireState == EFireState::Reload)return;
-	
-	FRotator OffsetRot;
-	GetFireDirection(FireLocation,CameraComponent,OffsetRot);
 	
 	AProjectile* CreateProjectile = GetWorld()->SpawnActor<AProjectile>(
 		GetProject,
 		FireLocation,
-		OffsetRot
-		);
+		FireDirection
+	);
 
-	CreateProjectile->SourcePlayer = Cast<AMyCharacter>(CameraComponent->GetOwner());
+	if(CreateProjectile == nullptr)return;
+	CreateProjectile->SourcePlayer = Cast<AMyCharacter>(GetOwner());
 }
 
+// Deprecated 弃用该方法，转而使用屏幕位置生成发射点位
 // 通过计算摄像头的位置和摄像头正方向确定开始与结束位置，生成射线，将射线击中的点作为射击的点，从子弹初始位置看向击中位置获取发射方向。
 void UFireComponent::GetFireDirection(FVector FireLocation,UCameraComponent* CameraComponent,FRotator &FireDirection)
 {
