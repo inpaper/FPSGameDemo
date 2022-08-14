@@ -46,18 +46,19 @@ public:
 	//---------------------------------------------------------------------------------
 	// 基础流程：玩家点击按钮等待数秒后传送，传送到靶场后等待数秒后正式游戏，一定时间后游戏结束展示排行榜
 	// TODO 后续考虑将以下逻辑写入GameMode中，目前放在这里和Controller的功能对应不上
-	
-	// 服务器中开始游戏，玩家点击开始游戏触发
+
+	// 目前有两种游戏模式，输入0为靶场模式，输入1为AI场模式
+	// 服务器中开始游戏，玩家点击开始游戏触发，
 	// TODO 目前设置为任何一个人点击就可以开始游戏，后续可以做成全部客户端同意方可进入。
 	UFUNCTION(BlueprintCallable,Server,Reliable)
-	void AskToStartGame();
+	void AskToStartGame(int32 GameType);
 
 	// 服务器中将玩家传送到靶场
 	UFUNCTION(Server,Reliable)
-	void Pass();
+	void Pass(int32 GameType);
 
 	UFUNCTION(Server,Reliable)
-	void StartGame();
+	void StartGame(int32 GameType);
 
 	UFUNCTION(Server,Reliable)
 	void EndGame();
@@ -98,8 +99,24 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void SendCalScoreMessageToUMG(const TArray<int32>& PlayerNumber,const TArray<int32>& PlayerScore);
 
+	// 获取到服务器发来的开始AI场游戏信息，隐藏HUD的部分UI
+	UFUNCTION(Client,Reliable)
+	void GetMessageToHideHUDUI(int32 GameType);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void SendHideHUDUIMessageToUMG(int32 GameType);
+
+	
+	//-----------------------
+	// 生成AI的Pawn
+	UFUNCTION(BlueprintCallable,Server,Unreliable)
+	void AskToSpawnAIPawn();
+	
 private:
 	// 用于服务器倒计时进入下一阶段，
 	// TODO 鲁棒性不足，如果时间到了，游戏状态不对应，如何重新根据游戏状态表现游戏
 	FTimerHandle PassTimeHandle;
+
+	// 用于定时器传值使用，委托
+	FTimerDelegate PassTimeDelegate;
 };

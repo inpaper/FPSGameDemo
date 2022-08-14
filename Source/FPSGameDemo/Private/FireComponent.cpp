@@ -74,7 +74,7 @@ void UFireComponent::Fire_Implementation(TSubclassOf<class AProjectile> GetProje
 		FireLocation,
 		FireDirection
 	);
-
+	RecordTime = FPlatformTime::Seconds();
 	if(CreateProjectile == nullptr)return;
 	CreateProjectile->SourcePlayer = Cast<AMyCharacter>(GetOwner());
 }

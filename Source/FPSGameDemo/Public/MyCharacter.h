@@ -34,7 +34,6 @@ class FPSGAMEDEMO_API AMyCharacter : public ACharacter
 	void FireBoomIndicatorOpen();
 	UFUNCTION(BlueprintCallable,Category="FireBoom")
 	void FireBoomIndicatorClose();
-	
 public:
 	// Sets default values for this character's properties
 	AMyCharacter();
@@ -90,6 +89,17 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	UFUNCTION(Server,Reliable)
+	void NotifyServerLookForward(float LookForward);
+
+	UFUNCTION(NetMulticast,Reliable)
+	void NotifyClientsLookForward(float LookForward);
+
+	UPROPERTY(BlueprintReadOnly)
+	float GetLookForward;
+
+	void AIFire();
 private:
 	// 控制八方向移动，限制只有X和Y不能同时输入
 	bool bRunEight = false;

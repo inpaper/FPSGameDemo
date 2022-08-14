@@ -15,11 +15,11 @@ UCLASS()
 class FPSGAMEDEMO_API AFPSGameDemoGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
-
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 
 public:
-	// TODO 不适用Server看一下是否可以正常运行
+	// 目前没有使用该方法
+	// TODO 不使用Server看一下是否可以正常运行
 	UFUNCTION(Server,Reliable)
 	void RespawnPlayerPawn(APlayerController* PlayerController);
 	
@@ -28,15 +28,21 @@ public:
 	// 控制玩家在靶场等待时间的开火，倒计时结束前不允许开火
 	void ChangeFireAbility(bool GetFireAbility);
 
+	void RespawnAIPawn();
+	
 	// 存储所有游戏控制器
 	UPROPERTY(BlueprintReadOnly)
 	TArray<AMyPlayerController*> AllPlayerController;
 
+	bool bCreateRoom = true;
+	
 	// 保存游戏开始点
 	TArray<AActor*> GetGameStarts;
 
 	// 保存传送到靶场的用户点
-	TArray<AActor*> GetShootingTransform;
+	TArray<AActor*> Target_PlayerPoints;
+	TArray<AActor*> AI_PlayerPoints;
+	TArray<AActor*> AI_AIPoints;
 	
 	// 传送到靶场的等待时间
 	UPROPERTY(EditAnywhere)

@@ -3,6 +3,7 @@
 
 #include "FPSGameDemo/Public/MyCharacter.h"
 
+#include "MyAIController.h"
 #include "MyPlayerController.h"
 #include "Projectile.h"
 #include "Components/CapsuleComponent.h"
@@ -65,7 +66,48 @@ void AMyCharacter::BeginPlay()
 void AMyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if(!IsLocallyControlled())return;
+
+	// 由玩家控制
+	AMyPlayerController* PlayerController = Cast<AMyPlayerController>(GetController());
+	if(PlayerController == nullptr)
+	{
+		// 由AI控制
+		// AMyAIController* AIController = Cast<AMyAIController>(GetController());
+		// if(AIController == nullptr)
+		// {
+		// 	UE_LOG(LogTemp,Warning,TEXT("AIController is nullptr"));
+		// }else
+		// {
+		// 	UE_LOG(LogTemp,Warning,TEXT("AIController is OK"));
+		//
+		// 	// 尝试获取AI信息并发送到服务器
+		// 	GetLookForward = (AIController->GetLookForward);
+		// }
+		return;
+	}
+
+	int SizeX,SizeY;
+	PlayerController->GetViewportSize(SizeX,SizeY);
+	
+	float AimX,AimY;
+	AimX = SizeX * AimPercentX;
+	AimY = SizeY * AimPercentY;
+
+	FVector WorldLocation,WorldDirection;
+	PlayerController->DeprojectScreenPositionToWorld(AimX,AimY,WorldLocation,WorldDirection);
+	
+	float Ans = FVector::DotProduct(WorldDirection,GetActorUpVector());
+
+	NotifyServerLookForward(Ans);
 }
+
+// void AMyCharacter::GetLifetimeReplicatedProps( TArray< FLifetimeProperty > & OutLifetimeProps ) const
+// {
+// 	DOREPLIFETIME_CONDITION( AMyCharacter, GetLookForward, COND_SimulatedOnly );
+// }
+
 
 // Called to bind functionality to input
 void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -93,14 +135,19 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction("FireBoom",IE_Released,this,&AMyCharacter::FireBoomIndicatorClose);
 }
 
+void AMyCharacter::AIFire()
+{
+	FVector FireLocation = GunComponent->GetSocketLocation(FName("FirePoint"));
+	FRotator FireRotator = GetActorRotation();
+	FireComponent->Fire(ProjectileClass,FireLocation,FireRotator);
+}
+
+
 void AMyCharacter::FireBullet()
 {
 	FVector FireLocation = GunComponent->GetSocketLocation(FName("FirePoint"));
 	FRotator FireRotator;
 	CalculateFireRotator(FireLocation,FireRotator);
-	UE_LOG(LogTemp,Warning,TEXT("FireLocation %s"),*FireLocation.ToString());
-	UE_LOG(LogTemp,Warning,TEXT("FireRotator %s"),*FireRotator.ToString());
-
 	FireComponent->Fire(ProjectileClass,FireLocation,FireRotator);
 }
 
@@ -156,48 +203,12 @@ void AMyCharacter::MoveForward(float Value)
 {
 	YValue = Value;
 	Move();
-	// if(GetController())
-	// {
-	// 	if(Value == 0.0f)
-	// 	{
-	// 		bRunY = false;
-	// 		return;
-	// 	}
-	//
-	// 	// 限制八方向位移
-	// 	if(bRunX && !bRunEight)return;
-	// 	bRunY = true;
-	// 	
-	// 	const FRotator Rotation = GetController()->GetControlRotation();
-	// 	const FRotator YawRotation(0, Rotation.Yaw, 0);
-	// 	
-	// 	const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-	// 	AddMovementInput(Direction, Value);
-	// }
 }
 
 void AMyCharacter::MoveRight(float Value)
 {
 	XValue = Value;
 	Move();
-	// if ( GetController())
-	// {
-	// 	if(Value == 0.0f)
-	// 	{
-	// 		bRunX = false;
-	// 		return;
-	// 	}
-	//
-	// 	// 限制八方向位移
-	// 	if(bRunY && !bRunEight)return;
-	// 	bRunX = true;
-	// 	
-	// 	const FRotator Rotation = GetController()->GetControlRotation();
-	// 	const FRotator YawRotation(0, Rotation.Yaw, 0);
-	// 	
-	// 	const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-	// 	AddMovementInput(Direction, Value);
-	// }
 }
 
 float AMyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -238,6 +249,18 @@ void AMyCharacter::Move()
 	}
 }
 
+void AMyCharacter::NotifyServerLookForward_Implementation(float LookForward)
+{
+	if(!HasAuthority())return;
+	
+	GetLookForward = LookForward;
+	NotifyClientsLookForward(LookForward);
+}
+
+void AMyCharacter::NotifyClientsLookForward_Implementation(float LookForward)
+{
+	GetLookForward = LookForward;
+}
 
 
 

@@ -4,7 +4,7 @@
 #include "MyGameInstance.h"
 
 
-bool UMyGameInstance::TransitionToState(EGameState GetState)
+bool UMyGameInstance::TransitionToState(EPlayerGameMode GetState)
 {
 	if(IsCurrentState(GetState))
 	{
@@ -18,7 +18,7 @@ bool UMyGameInstance::TransitionToState(EGameState GetState)
 	return true;
 }
 
-bool UMyGameInstance::IsCurrentState(EGameState GetState)
+bool UMyGameInstance::IsCurrentState(EPlayerGameMode GetState)
 {
 	return CurrentState == GetState;
 }

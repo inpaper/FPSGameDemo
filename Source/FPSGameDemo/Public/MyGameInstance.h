@@ -9,7 +9,7 @@
 // 默认服务器上的GameInstance的状态才是真实状态，
 // TODO 客户端状态仅用于跟服务器状态核对？目前暂时没有使用
 UENUM()
-enum class EGameState:uint8
+enum class EPlayerGameMode:uint8
 {
 	// 主菜单界面
 	MainMenu,
@@ -20,7 +20,9 @@ enum class EGameState:uint8
 	// 靶场准备中
 	PlayingReady,
 	// 在靶场中
-	Playing,
+	PlayingTarget,
+	// 在AI场中
+	PlayingAI,
 	
 	Unknown,
 };
@@ -36,11 +38,11 @@ class FPSGAMEDEMO_API UMyGameInstance : public UGameInstance
 
 public:
 	UPROPERTY(BlueprintReadOnly,Category=GameState)
-	EGameState CurrentState = EGameState::MainMenu;
+	EPlayerGameMode CurrentState = EPlayerGameMode::MainMenu;
 
 	UFUNCTION(BlueprintCallable,Category=GameState)
-	bool TransitionToState(EGameState GetState);
+	bool TransitionToState(EPlayerGameMode GetState);
 
 	UFUNCTION(BlueprintCallable,Category=GameState)
-	bool IsCurrentState(EGameState GetState);
+	bool IsCurrentState(EPlayerGameMode GetState);
 };

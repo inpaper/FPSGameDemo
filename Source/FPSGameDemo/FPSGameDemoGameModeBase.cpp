@@ -2,6 +2,7 @@
 
 
 #include "FPSGameDemoGameModeBase.h"
+#include "MyAIController.h"
 #include "MyCharacter.h"
 #include "MyGameInstance.h"
 #include "MyPlayerController.h"
@@ -16,13 +17,37 @@ void AFPSGameDemoGameModeBase::PostLogin(APlayerController* NewPlayer)
 	if(HasAuthority())
 	{
 		UE_LOG(LogTemp,Warning,TEXT("NewPlayer Name %s"),*NewPlayer->GetName());
-		
-		// TODO 无法找到所有的开始点 
-		UGameplayStatics::GetAllActorsOfClass(this,APlayerStart::StaticClass(),GetGameStarts);
-		UE_LOG(LogTemp,Warning,TEXT("GameStart have %i Points"),GetGameStarts.Num());
-		
-		UGameplayStatics::GetAllActorsOfClass(this,AShootingPawnTransform::StaticClass(),GetShootingTransform);
-		UE_LOG(LogTemp,Warning,TEXT("GetShootingTransform have %i Points"),GetShootingTransform.Num());
+
+		// 初次开启服务器，先获取地图上的所有点信息
+		if(bCreateRoom)
+		{
+			bCreateRoom = false;
+			
+			UGameplayStatics::GetAllActorsOfClass(this,APlayerStart::StaticClass(),GetGameStarts);
+			UE_LOG(LogTemp,Warning,TEXT("GameStart have %i Points"),GetGameStarts.Num());
+
+			TArray<AActor*> GetAllPoints;
+			UGameplayStatics::GetAllActorsOfClass(this,AShootingPawnTransform::StaticClass(),GetAllPoints);
+			for (auto Point : GetAllPoints)
+			{
+				AShootingPawnTransform* GetPoint = Cast<AShootingPawnTransform>(Point);
+				switch (GetPoint->RespawnPawnPoint)
+				{
+					case ERespawnPawnPoint::Target_PlayerPoint:
+						Target_PlayerPoints.AddUnique(GetPoint);
+						break;
+					case ERespawnPawnPoint::AI_PlayerPoint:
+						AI_PlayerPoints.AddUnique(GetPoint);
+						break;
+					case ERespawnPawnPoint::AI_AIPoint:
+						AI_AIPoints.AddUnique(GetPoint);
+						break;
+					default:
+						break;
+				}
+			}
+			// UE_LOG(LogTemp,Warning,TEXT("GetShootingTransform have %i Points"),GetShootingTransform.Num());
+		}
 		
 		AMyPlayerController* NewPlayerController = Cast<AMyPlayerController>(NewPlayer);
 		AllPlayerController.AddUnique(NewPlayerController);
@@ -37,9 +62,9 @@ void AFPSGameDemoGameModeBase::PostLogin(APlayerController* NewPlayer)
 
 		// 切换服务器游戏状态
 		UMyGameInstance* ServerGameInstance = Cast<UMyGameInstance>(GetGameInstance());
-		if(ServerGameInstance->IsCurrentState(EGameState::MainMenu))
+		if(ServerGameInstance->IsCurrentState(EPlayerGameMode::MainMenu))
 		{
-			if(!ServerGameInstance->TransitionToState(EGameState::WaitingPlayer))
+			if(!ServerGameInstance->TransitionToState(EPlayerGameMode::WaitingPlayer))
 			{
 				UE_LOG(LogTemp,Warning,TEXT("TransitionToState WaitingPlayer Error"));
 			}
@@ -92,3 +117,21 @@ void AFPSGameDemoGameModeBase::ChangeFireAbility(bool GetFireAbility)
 	bFireAbility = GetFireAbility;
 }
 
+void AFPSGameDemoGameModeBase::RespawnAIPawn()
+{
+	for (auto Point : AI_AIPoints)
+	{
+		AMyCharacter* CreatePawn = GetWorld()->SpawnActor<AMyCharacter>(
+			DefaultPawnClass,
+			Point->GetActorLocation(),
+			Point->GetActorRotation()
+		);
+
+		AMyAIController* AIController = Cast<AMyAIController>(CreatePawn->GetController());
+		if(AIController == nullptr)
+		{
+			UE_LOG(LogTemp,Warning,TEXT("AIController Nullptr"));
+			return;
+		}
+	}
+}

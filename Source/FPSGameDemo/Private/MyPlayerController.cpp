@@ -60,25 +60,31 @@ void AMyPlayerController::NotifyPlayerSum_Implementation(int PlayerSum)
 	RefreshPlayerSum(PlayerSum);
 }
 
-void AMyPlayerController::AskToStartGame_Implementation()
+void AMyPlayerController::AskToStartGame_Implementation(int32 GameType)
 {
+	if(GameType != 0 && GameType != 1)return;
+	
 	if(!HasAuthority())return;
 	
 	AGameModeBase* GameModeBase = UGameplayStatics::GetGameMode(this);
 	AFPSGameDemoGameModeBase* GameMode = Cast<AFPSGameDemoGameModeBase>(GameModeBase);
 
-	// 人数不符合开始游戏的要求，只有在请求开始游戏阶段判断人数，后续等待时间如有玩家退出，不进行检测
-	// TODO 此处还可以增加错误窗口，如果人数不够就有人点了开始，就提示客户端玩家人数数据异常
-	if(GameMode->AllPlayerController.Num() < 2) return;
+	if(GameType == 0)
+	{
+		// 只有靶场模式需要检测人数
+		// 人数不符合开始游戏的要求，只有在请求开始游戏阶段判断人数，后续等待时间如有玩家退出，不进行检测
+		// TODO 此处还可以增加错误窗口，如果人数不够就有人点了开始，就提示客户端玩家人数数据异常
+		if(GameMode->AllPlayerController.Num() < 2) return;
+	}
 	
 	// 切换服务器游戏状态
 	UMyGameInstance* ServerGameInstance = Cast<UMyGameInstance>(GameMode->GetGameInstance());
-	if(!ServerGameInstance->IsCurrentState(EGameState::WaitingPlayer))
+	if(!ServerGameInstance->IsCurrentState(EPlayerGameMode::WaitingPlayer))
 	{
 		UE_LOG(LogTemp,Warning,TEXT("Server State is not WaitingPlayer,Fail to Start Game"));
 		return;
 	}
-	if(!ServerGameInstance->TransitionToState(EGameState::WaitingPassing))
+	if(!ServerGameInstance->TransitionToState(EPlayerGameMode::WaitingPassing))
 	{
 		UE_LOG(LogTemp,Warning,TEXT("TransitionToState WaitingPassing Error"));
 		return;
@@ -89,13 +95,22 @@ void AMyPlayerController::AskToStartGame_Implementation()
 		UE_LOG(LogTemp,Warning,TEXT("准备开始游戏"));
 		PlayerController->GetMessageToPass(GameMode->PassWaitTime);
 	}
-	
-	GetWorld()->GetTimerManager().SetTimer(PassTimeHandle,this,&AMyPlayerController::Pass,GameMode->PassWaitTime,false);
-	
+
+	PassTimeDelegate.BindUFunction(this,TEXT("Pass"),GameType);
+	GetWorld()->GetTimerManager().SetTimer(PassTimeHandle,PassTimeDelegate,GameMode->PassWaitTime,false);
+
+	if(GameType == 1)
+	{
+		for (auto PlayerController : GameMode->AllPlayerController)
+		{
+			PlayerController->GetMessageToHideHUDUI(GameType);
+		}
+	}
 }
 
-void AMyPlayerController::Pass_Implementation()
+void AMyPlayerController::Pass_Implementation(int32 GameType)
 {
+	PassTimeDelegate.Unbind();
 	GetWorld()->GetTimerManager().ClearTimer(PassTimeHandle);
 
 	if(!HasAuthority())return;
@@ -105,36 +120,54 @@ void AMyPlayerController::Pass_Implementation()
 	
 	// 切换服务器游戏状态
 	UMyGameInstance* ServerGameInstance = Cast<UMyGameInstance>(GameMode->GetGameInstance());
-	if(!ServerGameInstance->IsCurrentState(EGameState::WaitingPassing))
+	if(!ServerGameInstance->IsCurrentState(EPlayerGameMode::WaitingPassing))
 	{
 		UE_LOG(LogTemp,Warning,TEXT("Server State is not WaitingPassing,Fail to Pass"));
 		return;
 	}
-	if(!ServerGameInstance->TransitionToState(EGameState::PlayingReady))
+	if(!ServerGameInstance->TransitionToState(EPlayerGameMode::PlayingReady))
 	{
 		UE_LOG(LogTemp,Warning,TEXT("TransitionToState PlayingReady Error"));
 		return;
 	}
 	
-	// TODO 地图只有三个点位，此处默认人数不大于3，后续可以考虑将代码升级为自动生成点位
+
 	int32 i = 0;
 	for (auto PlayerController : GameMode->AllPlayerController)
 	{
-		// 将玩家传送到靶场中的点位
-		PlayerController->GetPawn()->SetActorTransform(GameMode->GetShootingTransform[i]->GetTransform());
+		if(GameType == 0)
+		{
+			// TODO 地图只有三个点位，此处默认人数不大于3，后续可以考虑将代码升级为自动生成点位
+			// 将玩家传送到靶场中的点位
+			if(GameMode->Target_PlayerPoints.Num() <= i)continue;
+			PlayerController->GetPawn()->SetActorTransform(GameMode->Target_PlayerPoints[i]->GetTransform());
+		}else if(GameType == 1)
+		{
+			// TODO 地图只有三个点位，此处默认人数不大于3，后续可以考虑将代码升级为自动生成点位
+			// 将玩家传送到靶场中的点位
+			if(GameMode->AI_PlayerPoints.Num() <= i)continue;
+			PlayerController->GetPawn()->SetActorTransform(GameMode->AI_PlayerPoints[i]->GetTransform());
+		}
+		
 		i++;
-
 		PlayerController->GetMessageToReadyGame(GameMode->StartGameWaitTime);
 	}
 
+	if(GameType == 1)
+	{
+		AskToSpawnAIPawn();
+	}
+	
 	GameMode->ClearPlayerScore();
 	GameMode->ChangeFireAbility(false);
-	
-	GetWorld()->GetTimerManager().SetTimer(PassTimeHandle,this,&AMyPlayerController::StartGame,GameMode->StartGameWaitTime,false);
+
+	PassTimeDelegate.BindUFunction(this,TEXT("StartGame"),GameType);
+	GetWorld()->GetTimerManager().SetTimer(PassTimeHandle,PassTimeDelegate,GameMode->StartGameWaitTime,false);
 }
 
-void AMyPlayerController::StartGame_Implementation()
+void AMyPlayerController::StartGame_Implementation(int32 GameType)
 {
+	PassTimeDelegate.Unbind();
 	GetWorld()->GetTimerManager().ClearTimer(PassTimeHandle);
 
 	if(!HasAuthority())return;
@@ -144,12 +177,12 @@ void AMyPlayerController::StartGame_Implementation()
 	
 	// 切换服务器游戏状态
 	UMyGameInstance* ServerGameInstance = Cast<UMyGameInstance>(GameMode->GetGameInstance());
-	if(!ServerGameInstance->IsCurrentState(EGameState::PlayingReady))
+	if(!ServerGameInstance->IsCurrentState(EPlayerGameMode::PlayingReady))
 	{
 		UE_LOG(LogTemp,Warning,TEXT("Server State is not PlayingReady,Fail to Playing"));
 		return;
 	}
-	if(!ServerGameInstance->TransitionToState(EGameState::Playing))
+	if(!ServerGameInstance->TransitionToState(EPlayerGameMode::PlayingTarget))
 	{
 		UE_LOG(LogTemp,Warning,TEXT("TransitionToState Playing Error"));
 		return;
@@ -164,7 +197,14 @@ void AMyPlayerController::StartGame_Implementation()
 		PlayerController->GetMessageToStartGame(GameMode->TotalGameTime);
 	}
 
-	GetWorld()->GetTimerManager().SetTimer(PassTimeHandle,this,&AMyPlayerController::EndGame,GameMode->TotalGameTime,false);
+	// 靶场游戏有倒计时
+	if(GameType == 0)
+	{
+		GetWorld()->GetTimerManager().SetTimer(PassTimeHandle,this,&AMyPlayerController::EndGame,GameMode->TotalGameTime,false);
+	}
+
+	// TODO AI场游戏结束条件未定
+	// -----
 }
 
 void AMyPlayerController::EndGame_Implementation()
@@ -173,7 +213,7 @@ void AMyPlayerController::EndGame_Implementation()
 
 	if(!HasAuthority())return;
 
-	UE_LOG(LogTemp,Warning,TEXT("测试使用：游戏结束!!"));
+	UE_LOG(LogTemp,Warning,TEXT("测试使用：靶场游戏结束!!"));
 	// 计算分数
 	CalculateScore();
 }
@@ -223,6 +263,22 @@ void AMyPlayerController::GetMessageToCalScore_Implementation(const TArray<int32
 	SendCalScoreMessageToUMG(PlayerNumber,PlayerScore);
 }
 
+void AMyPlayerController::GetMessageToHideHUDUI_Implementation(int32 GameType)
+{
+	SendHideHUDUIMessageToUMG(GameType);
+}
+
+
+
+void AMyPlayerController::AskToSpawnAIPawn_Implementation()
+{
+	if (!HasAuthority())return;
+
+	AGameModeBase* GameModeBase = UGameplayStatics::GetGameMode(this);
+	AFPSGameDemoGameModeBase* GameMode = Cast<AFPSGameDemoGameModeBase>(GameModeBase);
+
+	GameMode->RespawnAIPawn();
+}
 
 
 
