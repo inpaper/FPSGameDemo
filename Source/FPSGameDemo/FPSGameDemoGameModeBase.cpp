@@ -7,6 +7,7 @@
 #include "MyGameInstance.h"
 #include "MyPlayerController.h"
 #include "MyPlayerState.h"
+#include "PlayerCharacter.h"
 #include "ShootingPawnTransform.h"
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
@@ -90,7 +91,7 @@ void AFPSGameDemoGameModeBase::RespawnPlayerPawn_Implementation(APlayerControlle
 	{
 		ControlledPawn->Destroy();
 	}
-	AMyCharacter* CreatePawn = GetWorld()->SpawnActor<AMyCharacter>(
+	APlayerCharacter* CreatePawn = GetWorld()->SpawnActor<APlayerCharacter>(
 		DefaultPawnClass,
 		FVector::ZeroVector,
 		FRotator::ZeroRotator
@@ -119,19 +120,44 @@ void AFPSGameDemoGameModeBase::ChangeFireAbility(bool GetFireAbility)
 
 void AFPSGameDemoGameModeBase::RespawnAIPawn()
 {
-	for (auto Point : AI_AIPoints)
-	{
-		AMyCharacter* CreatePawn = GetWorld()->SpawnActor<AMyCharacter>(
+	if(GetGameStarts.Num() <= 0)return;
+	AActor* GameStart = GetGameStarts[0];
+	
+	APlayerCharacter* CreatePawn = GetWorld()->SpawnActor<APlayerCharacter>(
 			DefaultPawnClass,
-			Point->GetActorLocation(),
-			Point->GetActorRotation()
+			GameStart->GetActorLocation(),
+			GameStart->GetActorRotation()
 		);
-
-		AMyAIController* AIController = Cast<AMyAIController>(CreatePawn->GetController());
-		if(AIController == nullptr)
-		{
-			UE_LOG(LogTemp,Warning,TEXT("AIController Nullptr"));
-			return;
-		}
+	
+	// 在此处把AI的标签去掉，保证AI不会攻击AI
+	CreatePawn->Tags.Empty();
+	
+	
+	AMyAIController* AIController = Cast<AMyAIController>(CreatePawn->GetController());
+	if(AIController == nullptr)
+	{
+		UE_LOG(LogTemp,Warning,TEXT("AIController Nullptr"));
+		return;
 	}
+
+	
+	// 测试的时候先使用前面的代码
+	// for (auto Point : AI_AIPoints)
+	// {
+	// 	AMyCharacter* CreatePawn = GetWorld()->SpawnActor<AMyCharacter>(
+	// 		DefaultPawnClass,
+	// 		Point->GetActorLocation(),
+	// 		Point->GetActorRotation()
+	// 	);
+	//
+	// 	// 在此处把AI的标签去掉，保证AI不会攻击AI
+	// 	CreatePawn->Tags.Empty();
+	// 	
+	// 	AMyAIController* AIController = Cast<AMyAIController>(CreatePawn->GetController());
+	// 	if(AIController == nullptr)
+	// 	{
+	// 		UE_LOG(LogTemp,Warning,TEXT("AIController Nullptr"));
+	// 		return;
+	// 	}
+	// }
 }

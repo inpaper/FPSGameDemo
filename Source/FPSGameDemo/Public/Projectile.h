@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "MyCharacter.h"
+#include "PlayerCharacter.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Projectile.generated.h"
@@ -33,7 +34,7 @@ public:
 	UProjectileMovementComponent* ProjectileMovementComponent;
 
 	// 保存投射出来的玩家，击中物体后给对应玩家加分
-	AMyCharacter* SourcePlayer;
+	APlayerCharacter* SourcePlayer;
 	
 	UPROPERTY(EditAnywhere,Category=Projectile)
 	float HitForceBonus = 100.0f;

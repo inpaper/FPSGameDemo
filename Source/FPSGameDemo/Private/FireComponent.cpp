@@ -2,6 +2,8 @@
 
 
 #include "FireComponent.h"
+
+#include "PlayerCharacter.h"
 #include "Projectile.h"
 #include "Camera/CameraComponent.h"
 #include "FPSGameDemo/FPSGameDemoGameModeBase.h"
@@ -76,7 +78,7 @@ void UFireComponent::Fire_Implementation(TSubclassOf<class AProjectile> GetProje
 	);
 	RecordTime = FPlatformTime::Seconds();
 	if(CreateProjectile == nullptr)return;
-	CreateProjectile->SourcePlayer = Cast<AMyCharacter>(GetOwner());
+	CreateProjectile->SourcePlayer = Cast<APlayerCharacter>(GetOwner());
 }
 
 // Deprecated 弃用该方法，转而使用屏幕位置生成发射点位

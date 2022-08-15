@@ -2,8 +2,11 @@
 
 
 #include "Projectile.h"
+
+#include "AICharacter.h"
 #include "MyCharacter.h"
 #include "MyPlayerState.h"
+#include "PlayerCharacter.h"
 #include "TargetScoreLogit.h"
 #include "Components/SphereComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -49,7 +52,7 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 	// 不处理击中地板的子弹
 	if(OtherActor->GetName() == TEXT("Floor"))return;
 
-	if(Cast<AMyCharacter>(OtherActor))
+	if(Cast<APlayerCharacter>(OtherActor) || Cast<AAICharacter>(OtherActor))
 	{
 		Destroy();
 		return;

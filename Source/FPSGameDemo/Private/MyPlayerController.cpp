@@ -5,6 +5,7 @@
 #include "MyCharacter.h"
 #include "MyGameInstance.h"
 #include "MyPlayerState.h"
+#include "PlayerCharacter.h"
 #include "FPSGameDemo/FPSGameDemoGameModeBase.h"
 #include "GameFramework/GameState.h"
 #include "Kismet/GameplayStatics.h"
@@ -42,7 +43,7 @@ void AMyPlayerController::RespawnPlayerPawn_Implementation()
 	
 	AActor* GameStart = GameMode->GetGameStarts[MyPlayerState->PlayerNumber];
 	
-	AMyCharacter* CreatePawn = GetWorld()->SpawnActor<AMyCharacter>(
+	APlayerCharacter* CreatePawn = GetWorld()->SpawnActor<APlayerCharacter>(
 		GameMode->DefaultPawnClass,
 		GameStart->GetActorLocation(),
 		GameStart->GetActorRotation()
