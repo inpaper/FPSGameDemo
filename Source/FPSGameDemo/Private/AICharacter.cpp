@@ -12,6 +12,7 @@ AAICharacter::AAICharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 }
 
 // Called when the game starts or when spawned
@@ -54,16 +55,5 @@ void AAICharacter::AIFireBluePrint(AActor* FireToActor)
 	
 	FRotator FireRotator = UKismetMathLibrary::FindLookAtRotation(FireFromLocation,FireToLocation);
 	FireComponent->Fire(ProjectileClass,FireFromLocation,FireRotator);
-}
-
-void AAICharacter::Focus(AActor* Target)
-{
-	if (Target == nullptr)
-	{
-		return;
-	}
-
-	Cast<AAIController>(GetController())->SetFocus(Target,EAIFocusPriority::Gameplay);
-	
 }
 

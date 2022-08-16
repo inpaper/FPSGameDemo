@@ -59,5 +59,6 @@ public:
 	// 玩家是否具备开火功能，在准备阶段禁止使用
 	bool bFireAbility = true;
 
-	// TSubclassOf<class AMyAIController> 
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class AAICharacter> AIPawnClass; 
 };

@@ -120,44 +120,44 @@ void AFPSGameDemoGameModeBase::ChangeFireAbility(bool GetFireAbility)
 
 void AFPSGameDemoGameModeBase::RespawnAIPawn()
 {
-	if(GetGameStarts.Num() <= 0)return;
-	AActor* GameStart = GetGameStarts[0];
-	
-	APlayerCharacter* CreatePawn = GetWorld()->SpawnActor<APlayerCharacter>(
-			DefaultPawnClass,
-			GameStart->GetActorLocation(),
-			GameStart->GetActorRotation()
-		);
-	
-	// 在此处把AI的标签去掉，保证AI不会攻击AI
-	CreatePawn->Tags.Empty();
-	
-	
-	AMyAIController* AIController = Cast<AMyAIController>(CreatePawn->GetController());
-	if(AIController == nullptr)
-	{
-		UE_LOG(LogTemp,Warning,TEXT("AIController Nullptr"));
-		return;
-	}
+	// if(GetGameStarts.Num() <= 0)return;
+	// AActor* GameStart = GetGameStarts[0];
+	//
+	// AAICharacter* CreatePawn = GetWorld()->SpawnActor<AAICharacter>(
+	// 		AIPawnClass,
+	// 		GameStart->GetActorLocation(),
+	// 		GameStart->GetActorRotation()
+	// 	);
+	//
+	// // 在此处把AI的标签去掉，保证AI不会攻击AI
+	// CreatePawn->Tags.Empty();
+	//
+	//
+	// AMyAIController* AIController = Cast<AMyAIController>(CreatePawn->GetController());
+	// if(AIController == nullptr)
+	// {
+	// 	UE_LOG(LogTemp,Warning,TEXT("AIController Nullptr"));
+	// 	return;
+	// }
 
 	
 	// 测试的时候先使用前面的代码
-	// for (auto Point : AI_AIPoints)
-	// {
-	// 	AMyCharacter* CreatePawn = GetWorld()->SpawnActor<AMyCharacter>(
-	// 		DefaultPawnClass,
-	// 		Point->GetActorLocation(),
-	// 		Point->GetActorRotation()
-	// 	);
-	//
-	// 	// 在此处把AI的标签去掉，保证AI不会攻击AI
-	// 	CreatePawn->Tags.Empty();
-	// 	
-	// 	AMyAIController* AIController = Cast<AMyAIController>(CreatePawn->GetController());
-	// 	if(AIController == nullptr)
-	// 	{
-	// 		UE_LOG(LogTemp,Warning,TEXT("AIController Nullptr"));
-	// 		return;
-	// 	}
-	// }
+	for (auto Point : AI_AIPoints)
+	{
+		AAICharacter* CreatePawn = GetWorld()->SpawnActor<AAICharacter>(
+			AIPawnClass,
+			Point->GetActorLocation(),
+			Point->GetActorRotation()
+		);
+	
+		// 在此处把AI的标签去掉，保证AI不会攻击AI
+		CreatePawn->Tags.Empty();
+		
+		AMyAIController* AIController = Cast<AMyAIController>(CreatePawn->GetController());
+		if(AIController == nullptr)
+		{
+			UE_LOG(LogTemp,Warning,TEXT("AIController Nullptr"));
+			return;
+		}
+	}
 }

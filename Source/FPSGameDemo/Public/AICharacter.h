@@ -35,7 +35,5 @@ public:
 	// 蓝图中使用行为树进行管理
 	UFUNCTION(BlueprintCallable)
 	void AIFireBluePrint(AActor* FireToActor);
-
-	UFUNCTION(BlueprintCallable)
-	void Focus(AActor* Target);
+	
 };

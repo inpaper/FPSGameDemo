@@ -2,7 +2,6 @@
 
 
 #include "MyAIController.h"
-#include "MyCharacter.h"
 #include "PlayerCharacter.h"
 #include "FPSGameDemo/FPSGameDemoGameModeBase.h"
 #include "Kismet/GameplayStatics.h"
@@ -11,11 +10,20 @@
 
 void AMyAIController::Tick(float DeltaSeconds)
 {
-	// if(GetPawn())
+	// if(GetPawn() && HasAuthority())
 	// {
 	// 	AIBehavior();
 	// }
 	
+}
+
+void AMyAIController::Init()
+{
+	if(GameMode == nullptr)
+	{
+		GameMode = Cast<AFPSGameDemoGameModeBase>(UGameplayStatics::GetGameMode(this));
+		ControlPawn = Cast<AAICharacter>(GetPawn());
+	}
 }
 
 // void AMyAIController::GetLifetimeReplicatedProps( TArray< FLifetimeProperty > & OutLifetimeProps ) const
@@ -25,23 +33,20 @@ void AMyAIController::Tick(float DeltaSeconds)
 
 void AMyAIController::AIBehavior()
 {
-	if(!HasAuthority())return;
-
 	if(GameMode == nullptr)
-	{
-		GameMode = Cast<AFPSGameDemoGameModeBase>(UGameplayStatics::GetGameMode(this));
-		ControlPawn = Cast<AAICharacter>(GetPawn());
-	}
+		Init();
 
-	AMyPlayerController* NearlyPlayer = nullptr;
-	NearlyPlayer = FindNearlyPlayer();
+	AActor* NearlyPlayer = FindNearlyPlayer();
 	if(NearlyPlayer == nullptr)return;
 
 	LookToNearlyPlayer(NearlyPlayer);
 }
 
-AMyPlayerController* AMyAIController::FindNearlyPlayer()
+AActor* AMyAIController::FindNearlyPlayer()
 {
+	if(GameMode == nullptr)
+		Init();
+	
 	AMyPlayerController* NearlyPlayer = nullptr;
 	// FLT_MAX为浮点最大值
 	float MinDistance = FLT_MAX;
@@ -70,14 +75,20 @@ AMyPlayerController* AMyAIController::FindNearlyPlayer()
 		}
 	}
 
-	return NearlyPlayer;
+	if(NearlyPlayer == nullptr)
+		return nullptr;
+	
+	return NearlyPlayer->GetPawn();
 }
 
-void AMyAIController::LookToNearlyPlayer(AMyPlayerController* const NearlyPlayer)
+void AMyAIController::LookToNearlyPlayer(AActor* const NearlyPlayer)
 {
+	if(GameMode == nullptr)
+		Init();
+	
 	FRotator AIRot = ControlPawn->GetActorRotation();
 	FRotator LookRot = UKismetMathLibrary::FindLookAtRotation(
-		ControlPawn->GetActorLocation(),NearlyPlayer->GetPawn()->GetActorLocation());
+		ControlPawn->GetActorLocation(),NearlyPlayer->GetActorLocation());
 	
 	float ChangeYaw = LookRot.Yaw - AIRot.Yaw;
 	// 防止在+180和-180的边界处无法正常旋转
@@ -97,6 +108,19 @@ void AMyAIController::LookToNearlyPlayer(AMyPlayerController* const NearlyPlayer
 	ControlPawn->SetActorRelativeRotation(FRotator(0,NewRotationYaw,0));
 }
 
+bool AMyAIController::CheckNearlyPlayerRot(AActor* const NearlyPlayer, float LookPrecision)
+{
+	if(GameMode == nullptr)
+		Init();
+	
+	FRotator AIRot = ControlPawn->GetActorRotation();
+	FRotator LookRot = UKismetMathLibrary::FindLookAtRotation(
+		ControlPawn->GetActorLocation(),NearlyPlayer->GetActorLocation());
+	
+	float ChangeYaw = LookRot.Yaw - AIRot.Yaw;
+
+	return FMath::Abs(ChangeYaw) < LookPrecision;
+}
 
 
 void AMyAIController::GetPlayerPawnTransform()
