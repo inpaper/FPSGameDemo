@@ -2,6 +2,8 @@
 
 
 #include "Projectile_Boom.h"
+
+#include "BaseCharacter.h"
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystemComponent.h"
 
@@ -47,6 +49,12 @@ void AProjectile_Boom::BeginPlay()
 
 	CollisionMesh->OnComponentHit.AddDynamic(this,&AProjectile_Boom::OnHit);
 
+	// 只在服务器绑定定时炸弹逻辑
+	if(GetLocalRole() != ROLE_Authority)
+	{
+		UE_LOG(LogTemp,Warning,TEXT("Not Server"));
+		return;
+	}
 	GetWorld()->GetTimerManager().SetTimer(BoomTimeHandle,this,&AProjectile_Boom::Boom,ProjectileLife,false);
 }
 
@@ -59,18 +67,20 @@ void AProjectile_Boom::Tick(float DeltaTime)
 // 只有直接击中非地面外的物体会立刻爆炸，否则都是在一定时间后爆炸
 void AProjectile_Boom::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
+	// 只在服务器运行，如果爆炸就立刻通知所有服务器
+	if(GetLocalRole() != ROLE_Authority)
+		return;
+	
 	CollisionMesh->OnComponentHit.RemoveDynamic(this,&AProjectile_Boom::OnHit);
 	
 	if(OtherActor->GetName() == TEXT("Floor"))return;
 	UE_LOG(LogTemp,Warning,TEXT("手榴弹击中物体 %s"),*OtherActor->GetName());
-
+	
 	Boom();
 }
 
-void AProjectile_Boom::Boom()
+void AProjectile_Boom::Boom_Implementation()
 {
-	GetWorld()->GetTimerManager().ClearTimer(BoomTimeHandle);
-	
 	BoomParticleComponent->Activate();
 
 	SetRootComponent(BoomParticleComponent);
@@ -78,8 +88,15 @@ void AProjectile_Boom::Boom()
 	CollisionMesh->DestroyComponent();
 	MeshComponent->DestroyComponent();
 	
-	// BoomInServer();
 	RadialForceComponent->FireImpulse();
+
+	if(GetLocalRole() != ROLE_Authority)
+	{
+		UE_LOG(LogTemp,Warning,TEXT("Not Server"));
+		return;
+	}
+
+	GetWorld()->GetTimerManager().ClearTimer(BoomTimeHandle);
 	
 	// 炸弹只对玩家血量进行伤害
 	// TODO 目前还没想好炸弹的具体游戏逻辑
@@ -93,7 +110,3 @@ void AProjectile_Boom::Boom()
 	);
 }
 
-void AProjectile_Boom::BoomInServer_Implementation()
-{
-	RadialForceComponent->FireImpulse();
-}

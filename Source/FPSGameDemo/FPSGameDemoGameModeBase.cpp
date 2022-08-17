@@ -74,7 +74,7 @@ void AFPSGameDemoGameModeBase::PostLogin(APlayerController* NewPlayer)
 		// 执行拥有该控制器的客户端需要执行的方法
 		NewPlayerController->OwnerClientPostLogin();
 		
-		MyPlayerState->ScoreUpdate();
+		MyPlayerState->InfoUpdate();
 		
 		// 通知所有玩家控制器，当前玩家数目
 		for (auto PlayerController : AllPlayerController)

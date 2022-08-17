@@ -29,12 +29,12 @@ public:
 	UFUNCTION(Server,Reliable)
 	void RespawnPlayerPawn();
 
-	// 更新游戏中玩家信息
-	UFUNCTION(Client,Reliable)
-	void RefreshPlayerInfo(const TArray<int32>& PlayerNumber,const TArray<int32>& PlayerScore);
+	// 更新积分榜中玩家信息
+	UFUNCTION(Client,Unreliable)
+	void RefreshPlayerInfo(const TArray<FString>& PlayerName,const TArray<int32>& PlayerScore);
 	
 	UFUNCTION(BlueprintImplementableEvent)
-	void FillHUDPlayerInfo(const TArray<int32>& PlayerNumber,const TArray<int32>& PlayerScore);
+	void FillHUDPlayerInfo(const TArray<FString>& PlayerName,const TArray<int32>& PlayerScore);
 
 	// 通知游戏中玩家数量
 	UFUNCTION(Client,Reliable)

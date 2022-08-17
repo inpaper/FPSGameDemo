@@ -2,7 +2,6 @@
 
 
 #include "PlayerCharacter.h"
-
 #include "MyPlayerController.h"
 #include "Kismet/KismetMathLibrary.h"
 
@@ -35,18 +34,7 @@ void APlayerCharacter::Tick(float DeltaTime)
 	AMyPlayerController* PlayerController = Cast<AMyPlayerController>(GetController());
 	if(PlayerController == nullptr)
 	{
-		// 由AI控制
-		// AMyAIController* AIController = Cast<AMyAIController>(GetController());
-		// if(AIController == nullptr)
-		// {
-		// 	UE_LOG(LogTemp,Warning,TEXT("AIController is nullptr"));
-		// }else
-		// {
-		// 	UE_LOG(LogTemp,Warning,TEXT("AIController is OK"));
-		//
-		// 	// 尝试获取AI信息并发送到服务器
-		// 	GetLookForward = (AIController->GetLookForward);
-		// }
+		UE_LOG(LogTemp,Warning,TEXT("PlayerController is nullptr"));
 		return;
 	}
 
@@ -90,23 +78,6 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAction("FireBoom",IE_Pressed,this,&APlayerCharacter::FireBoomIndicatorOpen);
 	PlayerInputComponent->BindAction("FireBoom",IE_Released,this,&APlayerCharacter::FireBoomIndicatorClose);
 }
-
-// void APlayerCharacter::AIFire()
-// {
-// 	FVector FireLocation = GunComponent->GetSocketLocation(FName("FirePoint"));
-// 	FRotator FireRotator = GetActorRotation();
-// 	FireComponent->Fire(ProjectileClass,FireLocation,FireRotator);
-// }
-//
-// void APlayerCharacter::AIFireBluePrint(AActor* FireToActor)
-// {
-// 	FVector FireFromLocation = GunComponent->GetSocketLocation(FName("FirePoint"));
-// 	FVector FireToLocation = FireToActor->GetActorLocation();
-// 	
-// 	FRotator FireRotator = UKismetMathLibrary::FindLookAtRotation(FireFromLocation,FireToLocation);
-// 	FireComponent->Fire(ProjectileClass,FireFromLocation,FireRotator);
-// }
-
 
 void APlayerCharacter::Fire()
 {
@@ -178,23 +149,6 @@ void APlayerCharacter::MoveRight(float Value)
 	Move();
 }
 
-float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
-{
-	UE_LOG(LogTemp,Warning,TEXT("受到伤害 %s"),*GetActorLocation().ToString());
-	
-	int32 GetDamage = FPlatformMath::RoundToInt(DamageAmount);
-	GetDamage = FMath::Clamp(GetDamage,0,CurrentHP);
-
-	CurrentHP -= GetDamage;
-
-	if(CurrentHP <= 0)
-	{
-		UE_LOG(LogTemp,Warning,TEXT("%s 玩家血量归零"),*GetName());
-	}
-
-	return GetDamage;
-}
-
 void APlayerCharacter::Move()
 {
 	if (!GetController())return;
@@ -227,5 +181,10 @@ void APlayerCharacter::NotifyServerLookForward_Implementation(float LookForward)
 void APlayerCharacter::NotifyClientsLookForward_Implementation(float LookForward)
 {
 	GetLookForward = LookForward;
+}
+
+void APlayerCharacter::GetMessageToRefreshHPName_Implementation(const FString& NewName)
+{
+	SendHPNameMessageToUMG(NewName);
 }
 

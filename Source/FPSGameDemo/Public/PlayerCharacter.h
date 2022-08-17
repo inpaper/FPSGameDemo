@@ -28,9 +28,6 @@ class FPSGAMEDEMO_API APlayerCharacter : public ABaseCharacter
 public:
 	// Sets default values for this character's properties
 	APlayerCharacter();
-
-	// 玩家伤害计算
-	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 	
 	// 炸弹生成物
 	UPROPERTY(EditDefaultsOnly,Category=FireBoom)
@@ -68,6 +65,13 @@ public:
 	UFUNCTION(NetMulticast,Reliable)
 	void NotifyClientsLookForward(float LookForward);
 
+	// 更新所有用户HP中的名称
+	UFUNCTION(NetMulticast,Unreliable)
+	void GetMessageToRefreshHPName(const FString & NewName);
+
+	UFUNCTION(BlueprintImplementableEvent,BlueprintCallable)
+	void SendHPNameMessageToUMG(const FString & NewName);
+	
 	UPROPERTY(BlueprintReadOnly)
 	float GetLookForward;
 
@@ -84,13 +88,7 @@ private:
 	// 判断是否当前正在按下X或者Y
 	bool bRunX = false;
 	bool bRunY = false;
-
-	UPROPERTY(EditAnywhere,Category="HP")
-	int32 MaxHP = 100;
-
-	UPROPERTY(VisibleAnywhere,Category="HP")
-	int32 CurrentHP = MaxHP;
-
+	
 	// 根据瞄准点确定
 	UPROPERTY(EditDefaultsOnly,Category=Fire)
 	float AimPercentX = 0.5f;

@@ -41,6 +41,7 @@ public:
 	UPROPERTY(EditAnywhere,Category=Projectile)
 	URadialForceComponent* RadialForceComponent;
 
+	// 只在服务器运行
 	UFUNCTION()
 	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit );
 
@@ -53,15 +54,12 @@ public:
 	float ParticleDestroyTime = 2.0f;
 
 	UPROPERTY(EditAnywhere,Category=Projectile)
-	float Damage = 20.0f;
+	float Damage = 30.0f;
 	
 private:
 	FTimerHandle BoomTimeHandle;
 
-	// 炸弹在各个客户端的表现
+	// 炸弹表现
+	UFUNCTION(NetMulticast,Reliable)
 	void Boom();
-
-	// TODO 炸弹在服务器执行的逻辑，如血量计算等
-	UFUNCTION(Server,Reliable)
-	void BoomInServer();
 };

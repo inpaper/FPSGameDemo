@@ -20,8 +20,10 @@ public:
 	int32 PlayerNumber = 0;
 
 	UPROPERTY(BlueprintReadOnly)
-	int32 PlayerScore = 0;
+	FString PlayerName = "DefaultPlayer";
 
+	UPROPERTY(BlueprintReadOnly,Category=Score)
+	int32 PlayerScore = 0;
 	// 玩家首次登录时用于初始化
 	// TODO 后续考虑使用名称替代Number
 	UFUNCTION()
@@ -42,6 +44,9 @@ public:
 	void ResetScore();
 
 	// 通知服务器更新数据
-	UFUNCTION(Server,Reliable)
-	void ScoreUpdate();
+	UFUNCTION(Server,Reliable,BlueprintCallable)
+	void InfoUpdate();
+
+	UFUNCTION(Server,Unreliable,BlueprintCallable)
+	void ChangeName(const FString& GetName);
 };

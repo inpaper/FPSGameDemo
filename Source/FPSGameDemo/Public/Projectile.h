@@ -27,6 +27,10 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	// 碰撞事件
+	UFUNCTION()
+	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit );
+	
 	UPROPERTY(EditAnywhere,Category=Projectile)
 	USphereComponent* CollisionMesh;
 	
@@ -34,12 +38,11 @@ public:
 	UProjectileMovementComponent* ProjectileMovementComponent;
 
 	// 保存投射出来的玩家，击中物体后给对应玩家加分
-	APlayerCharacter* SourcePlayer;
+	ABaseCharacter* SourcePlayer;
 	
 	UPROPERTY(EditAnywhere,Category=Projectile)
 	float HitForceBonus = 100.0f;
 
-	// 碰撞事件
-	UFUNCTION()
-	void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit );
+	UPROPERTY(EditDefaultsOnly)
+	int32 HitDamage = 20;
 };

@@ -49,11 +49,13 @@ void AMyPlayerController::RespawnPlayerPawn_Implementation()
 		GameStart->GetActorRotation()
 		);
 	Possess(CreatePawn);
+
+	MyPlayerState->InfoUpdate();
 }
 
-void AMyPlayerController::RefreshPlayerInfo_Implementation(const TArray<int32>& PlayerNumber,const TArray<int32>& PlayerScore)
+void AMyPlayerController::RefreshPlayerInfo_Implementation(const TArray<FString>& PlayerName,const TArray<int32>& PlayerScore)
 {
-	FillHUDPlayerInfo(PlayerNumber,PlayerScore);
+	FillHUDPlayerInfo(PlayerName,PlayerScore);
 }
 
 void AMyPlayerController::NotifyPlayerSum_Implementation(int PlayerSum)

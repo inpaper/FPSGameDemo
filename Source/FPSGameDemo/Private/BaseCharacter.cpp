@@ -2,6 +2,7 @@
 
 
 #include "BaseCharacter.h"
+#include "PlayerCharacter.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
@@ -74,4 +75,42 @@ void ABaseCharacter::Fire()
 	UE_LOG(LogTemp,Warning,TEXT("%s Fire"),*GetName());
 }
 
+
+float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	UE_LOG(LogTemp,Warning,TEXT("受到伤害 %s %f"),*GetName(),DamageAmount);
+	
+	int32 GetDamage = FPlatformMath::RoundToInt(DamageAmount);
+	GetDamage = FMath::Clamp(GetDamage,0,CurrentHP);
+	
+	CurrentHP -= GetDamage;
+	GetMessageToTakeDamage(CurrentHP);
+
+	APlayerCharacter* DamageCauserPawn = Cast<APlayerCharacter>(DamageCauser);
+	if(DamageCauserPawn != nullptr)
+	{
+		DamageCauserPawn->GetMessageToShowHPUMG(this);
+	}
+	
+	if(CurrentHP <= 0)
+	{
+		UE_LOG(LogTemp,Warning,TEXT("%s 玩家血量归零"),*GetName());
+	}
+	
+	return DamageAmount;
+}
+
+void ABaseCharacter::GetMessageToTakeDamage_Implementation(int32 CurrentHPMessage)
+{
+	CurrentHP = CurrentHPMessage;
+	SendCurrentHPToUMG(CurrentHP);
+}
+
+void ABaseCharacter::GetMessageToShowHPUMG_Implementation(ABaseCharacter* InjuredPawn)
+{
+	if(InjuredPawn == nullptr)
+		return;
+
+	InjuredPawn->SendForceShowHPToUMG();
+}
 
