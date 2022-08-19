@@ -178,7 +178,7 @@ void AMyAIController::GetPlayerPawnTransform()
 
 	if(FMath::Abs(ChangeYaw) < 0.3f)
 	{
-		ControlPawn->AIFire();
+		// ControlPawn->AIFire();
 	}
 }
 

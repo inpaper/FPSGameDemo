@@ -41,13 +41,6 @@ void AAICharacter::Fire()
 	Super::Fire();
 }
 
-void AAICharacter::AIFire()
-{
-	FVector FireLocation = GunComponent->GetSocketLocation(FName("FirePoint"));
-	FRotator FireRotator = GetActorRotation();
-	FireComponent->Fire(ProjectileClass,FireLocation,FireRotator);
-}
-
 void AAICharacter::AIFireBluePrint(AActor* FireToActor)
 {
 	FVector FireFromLocation = GunComponent->GetSocketLocation(FName("FirePoint"));
@@ -55,5 +48,7 @@ void AAICharacter::AIFireBluePrint(AActor* FireToActor)
 	
 	FRotator FireRotator = UKismetMathLibrary::FindLookAtRotation(FireFromLocation,FireToLocation);
 	FireComponent->Fire(ProjectileClass,FireFromLocation,FireRotator);
+
+	Fire();
 }
 

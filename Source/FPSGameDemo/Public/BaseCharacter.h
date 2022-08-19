@@ -49,7 +49,11 @@ public:
 
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category=HP)
 	int32 CurrentHP = 100;
-	
+
+	bool bDead = false;
+
+	// 记录死亡顺序，用于Ai场游戏结束后计算排名
+	int32 DeadNumber = -1;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -63,6 +67,16 @@ public:
 
 	// 都有射击功能
 	virtual void Fire();
+
+	// 执行开火动画
+	UFUNCTION(Server,Unreliable)
+	void NotifyServerIsFire();
+
+	UFUNCTION(NetMulticast,Unreliable)
+	void NotifyClientsIsFire();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void NotifyAnimToFire();
 
 	// 只在服务器运行
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
@@ -81,4 +95,16 @@ public:
 	// 在攻击者的客户端上去执行被攻击者展示血量
 	UFUNCTION(BlueprintImplementableEvent)
 	void SendForceShowHPToUMG();
+
+	UFUNCTION(Server,Unreliable)
+	void UpdatePlayerHPInfo();
+
+	UFUNCTION(Client,Unreliable)
+	void GetMessageToAIGameOver(const TArray<FString>& PlayerName);
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void SendAIGameOverMessageToUMG(const TArray<FString>& PlayerName);
+
+	UFUNCTION(Server,Unreliable)
+	void ResumePlayerHP();
 };

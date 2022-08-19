@@ -4,7 +4,9 @@
 #include "BaseCharacter.h"
 #include "PlayerCharacter.h"
 #include "Components/CapsuleComponent.h"
+#include "FPSGameDemo/FPSGameDemoGameModeBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -72,9 +74,21 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 void ABaseCharacter::Fire()
 {
-	UE_LOG(LogTemp,Warning,TEXT("%s Fire"),*GetName());
+	// UE_LOG(LogTemp,Warning,TEXT("%s Fire"),*GetName());
+	
+	NotifyServerIsFire();
 }
 
+void ABaseCharacter::NotifyServerIsFire_Implementation()
+{
+	if(!HasAuthority())return;
+	NotifyClientsIsFire();
+}
+
+void ABaseCharacter::NotifyClientsIsFire_Implementation()
+{
+	NotifyAnimToFire();
+}
 
 float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
@@ -96,6 +110,8 @@ float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 	{
 		UE_LOG(LogTemp,Warning,TEXT("%s 玩家血量归零"),*GetName());
 	}
+
+	UpdatePlayerHPInfo();
 	
 	return DamageAmount;
 }
@@ -114,3 +130,93 @@ void ABaseCharacter::GetMessageToShowHPUMG_Implementation(ABaseCharacter* Injure
 	InjuredPawn->SendForceShowHPToUMG();
 }
 
+void ABaseCharacter::UpdatePlayerHPInfo_Implementation()
+{
+	if(!HasAuthority())return;
+
+	AGameModeBase* GameModeBase = UGameplayStatics::GetGameMode(this);
+	AFPSGameDemoGameModeBase* GameMode = Cast<AFPSGameDemoGameModeBase>(GameModeBase);
+
+	TArray<FString> PlayerNameArray;
+	TArray<int32> PlayerHPArray;
+
+	// 用于AI场游戏结束计算排名
+	bool bNotEnd = false;
+	int32 CurDeadNumber = 0;
+	ABaseCharacter* DeadPlayer = nullptr;
+	
+	for (auto PlayerController : GameMode->AllPlayerController)
+	{
+		AMyPlayerState* MyPlayerState = Cast<AMyPlayerState>(PlayerController->PlayerState);
+		PlayerNameArray.Add(MyPlayerState->PlayerName);
+
+		ABaseCharacter* MyPawn = Cast<ABaseCharacter>(PlayerController->GetPawn());
+		PlayerHPArray.Add(MyPawn->CurrentHP);
+
+		if(MyPawn->CurrentHP > 0)
+		{
+			bNotEnd = true;
+			MyPawn->bDead = false;
+		}
+		else
+		{
+			// 第一次死亡
+			if(!MyPawn->bDead)
+			{
+				bDead = true;
+				DeadPlayer = MyPawn;
+			}
+			else
+			{
+				CurDeadNumber++;
+			}
+		}
+	}
+
+	if(DeadPlayer != nullptr)
+	{
+		DeadPlayer->DeadNumber = CurDeadNumber;
+	}
+
+	TArray<FString> PlayerNameNumberArray;
+	if(!bNotEnd)
+	{
+		for (int i = 0; i < GameMode->AllPlayerController.Num();++i)
+		{
+			for (auto PlayerController : GameMode->AllPlayerController)
+			{
+				ABaseCharacter* MyPawn = Cast<ABaseCharacter>(PlayerController->GetPawn());
+				if(MyPawn->DeadNumber == i)
+				{
+					AMyPlayerState* MyPlayerState = Cast<AMyPlayerState>(PlayerController->PlayerState);
+					PlayerNameNumberArray.Add(MyPlayerState->PlayerName);
+					break;
+				}
+			}
+		}
+	}
+	
+	for (auto PlayerController : GameMode->AllPlayerController)
+	{
+		// 更新血量信息
+		PlayerController->RefreshPlayerHP(PlayerNameArray,PlayerHPArray);
+
+		// 血量全都为0，游戏结束。
+		if(!bNotEnd)
+		{
+			ABaseCharacter* MyPawn = Cast<ABaseCharacter>(PlayerController->GetPawn());
+			MyPawn->GetMessageToAIGameOver(PlayerNameNumberArray);
+		}
+	}
+}
+
+void ABaseCharacter::GetMessageToAIGameOver_Implementation(const TArray<FString>& PlayerName)
+{
+	SendAIGameOverMessageToUMG(PlayerName);
+}
+
+void ABaseCharacter::ResumePlayerHP_Implementation()
+{
+	CurrentHP = MaxHP;
+	UpdatePlayerHPInfo();
+}

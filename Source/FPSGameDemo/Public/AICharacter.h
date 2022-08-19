@@ -29,9 +29,6 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	UFUNCTION(BlueprintCallable)
-	void AIFire();
-
 	// 蓝图中使用行为树进行管理
 	UFUNCTION(BlueprintCallable)
 	void AIFireBluePrint(AActor* FireToActor);

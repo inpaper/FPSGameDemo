@@ -58,6 +58,7 @@ class FPSGAMEDEMO_API AMyAIController : public AAIController
 	float MaxDegreePerSecond = 120.0f;
 
 public:
+	// 该方法已被弃用
 	void GetPlayerPawnTransform();
 	
 	UPROPERTY(BlueprintReadOnly)

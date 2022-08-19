@@ -64,7 +64,6 @@ public:
 
 	UFUNCTION(NetMulticast,Reliable)
 	void NotifyClientsLookForward(float LookForward);
-
 	// 更新所有用户HP中的名称
 	UFUNCTION(NetMulticast,Unreliable)
 	void GetMessageToRefreshHPName(const FString & NewName);

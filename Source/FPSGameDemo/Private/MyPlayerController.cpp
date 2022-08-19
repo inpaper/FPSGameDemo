@@ -58,6 +58,11 @@ void AMyPlayerController::RefreshPlayerInfo_Implementation(const TArray<FString>
 	FillHUDPlayerInfo(PlayerName,PlayerScore);
 }
 
+void AMyPlayerController::RefreshPlayerHP_Implementation(const TArray<FString>& PlayerName,const TArray<int32>& PlayerHP)
+{
+	FillHUDPlayerHP(PlayerName,PlayerHP);
+}
+
 void AMyPlayerController::NotifyPlayerSum_Implementation(int PlayerSum)
 {
 	RefreshPlayerSum(PlayerSum);
@@ -155,15 +160,18 @@ void AMyPlayerController::Pass_Implementation(int32 GameType)
 		i++;
 		PlayerController->GetMessageToReadyGame(GameMode->StartGameWaitTime);
 	}
-
-	if(GameType == 1)
-	{
-		AskToSpawnAIPawn();
-	}
 	
 	GameMode->ClearPlayerScore();
 	GameMode->ChangeFireAbility(false);
 
+	if(GameType == 1)
+	{
+		AskToSpawnAIPawn();
+		
+		ABaseCharacter* BasePawn = Cast<ABaseCharacter>(GetPawn());
+		BasePawn->UpdatePlayerHPInfo();
+	}
+	
 	PassTimeDelegate.BindUFunction(this,TEXT("StartGame"),GameType);
 	GetWorld()->GetTimerManager().SetTimer(PassTimeHandle,PassTimeDelegate,GameMode->StartGameWaitTime,false);
 }
@@ -185,12 +193,24 @@ void AMyPlayerController::StartGame_Implementation(int32 GameType)
 		UE_LOG(LogTemp,Warning,TEXT("Server State is not PlayingReady,Fail to Playing"));
 		return;
 	}
-	if(!ServerGameInstance->TransitionToState(EPlayerGameMode::PlayingTarget))
-	{
-		UE_LOG(LogTemp,Warning,TEXT("TransitionToState Playing Error"));
-		return;
-	}
 
+	if(GameType == 0)
+	{
+		if(!ServerGameInstance->TransitionToState(EPlayerGameMode::PlayingTarget))
+		{
+			UE_LOG(LogTemp,Warning,TEXT("TransitionToState PlayingTarget Error"));
+			return;
+		}
+	}
+	else if(GameType == 1)
+	{
+		if(!ServerGameInstance->TransitionToState(EPlayerGameMode::PlayingAI))
+		{
+			UE_LOG(LogTemp,Warning,TEXT("TransitionToState PlayingAI Error"));
+			return;
+		}
+	}
+	
 	GameMode->ChangeFireAbility(true);
 
 	UE_LOG(LogTemp,Warning,TEXT("测试使用：正式开始游戏!!"));
@@ -228,12 +248,12 @@ void AMyPlayerController::CalculateScore_Implementation()
 	AGameModeBase* GameModeBase = UGameplayStatics::GetGameMode(this);
 	AFPSGameDemoGameModeBase* GameMode = Cast<AFPSGameDemoGameModeBase>(GameModeBase);
 
-	TArray<int32> PlayerNumber;
+	TArray<FString> PlayerNumber;
 	TArray<int32> PlayerScore;
 	for (auto PlayerController : GameMode->AllPlayerController)
 	{
 		AMyPlayerState* MyPlayerState = Cast<AMyPlayerState>(PlayerController->PlayerState);
-		PlayerNumber.Add(MyPlayerState->PlayerNumber);
+		PlayerNumber.Add(MyPlayerState->PlayerName);
 		PlayerScore.Add(MyPlayerState->PlayerScore);
 	}
 
@@ -244,6 +264,44 @@ void AMyPlayerController::CalculateScore_Implementation()
 	}
 }
 
+void AMyPlayerController::AskToBackWait_Implementation()
+{
+	if(!HasAuthority())return;
+	
+	AGameModeBase* GameModeBase = UGameplayStatics::GetGameMode(this);
+	AFPSGameDemoGameModeBase* GameMode = Cast<AFPSGameDemoGameModeBase>(GameModeBase);
+	
+	// 切换服务器游戏状态
+	UMyGameInstance* ServerGameInstance = Cast<UMyGameInstance>(GameMode->GetGameInstance());
+	if(!ServerGameInstance->IsCurrentState(EPlayerGameMode::PlayingAI) && !ServerGameInstance->IsCurrentState(EPlayerGameMode::PlayingTarget))
+	{
+		UE_LOG(LogTemp,Warning,TEXT("Server State is not PlayingAI or PlayingTarget,Fail to WaitingPlayer"));
+		return;
+	}
+	if(!ServerGameInstance->TransitionToState(EPlayerGameMode::WaitingPlayer))
+	{
+		UE_LOG(LogTemp,Warning,TEXT("TransitionToState WaitingPlayer Error"));
+		return;
+	}
+
+	GameMode->ClearPlayerScore();
+	
+	
+	int32 i = 0;
+	for (auto PlayerController : GameMode->AllPlayerController)
+	{
+		UE_LOG(LogTemp,Warning,TEXT("回到等待区域"));
+		// TODO 地图只有三个点位，此处默认人数不大于4，后续可以考虑将代码升级为自动生成点位
+		// 将玩家传送到等待区中的点位
+		if(GameMode->GetGameStarts.Num() <= i)continue;
+		PlayerController->GetPawn()->SetActorTransform(GameMode->GetGameStarts[i]->GetTransform());
+		i++;
+
+		ABaseCharacter* GetPawn = Cast<ABaseCharacter>(PlayerController->GetPawn());
+		GetPawn->ResumePlayerHP();
+		PlayerController->GetMessageToBackWait();
+	}
+}
 
 
 void AMyPlayerController::GetMessageToPass_Implementation(int32 WaitTime)
@@ -261,7 +319,7 @@ void AMyPlayerController::GetMessageToStartGame_Implementation(int32 TotalGameTi
 	SendStartGameMessageToUMG(TotalGameTime);
 }
 
-void AMyPlayerController::GetMessageToCalScore_Implementation(const TArray<int32>& PlayerNumber,const TArray<int32>& PlayerScore)
+void AMyPlayerController::GetMessageToCalScore_Implementation(const TArray<FString>& PlayerNumber,const TArray<int32>& PlayerScore)
 {
 	SendCalScoreMessageToUMG(PlayerNumber,PlayerScore);
 }
@@ -271,7 +329,10 @@ void AMyPlayerController::GetMessageToHideHUDUI_Implementation(int32 GameType)
 	SendHideHUDUIMessageToUMG(GameType);
 }
 
-
+void AMyPlayerController::GetMessageToBackWait_Implementation()
+{
+	SendBackWaitMessageToUMG();
+}
 
 void AMyPlayerController::AskToSpawnAIPawn_Implementation()
 {

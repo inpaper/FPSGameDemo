@@ -36,6 +36,13 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void FillHUDPlayerInfo(const TArray<FString>& PlayerName,const TArray<int32>& PlayerScore);
 
+	// 更新积分榜中玩家信息
+	UFUNCTION(Client,Unreliable)
+	void RefreshPlayerHP(const TArray<FString>& PlayerName,const TArray<int32>& PlayerHP);
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void FillHUDPlayerHP(const TArray<FString>& PlayerName,const TArray<int32>& PlayerHP);
+	
 	// 通知游戏中玩家数量
 	UFUNCTION(Client,Reliable)
 	void NotifyPlayerSum(int PlayerSum);
@@ -67,6 +74,10 @@ public:
 	UFUNCTION(Server,Reliable)
 	void CalculateScore();
 
+	// 游戏结束后回到等待区域
+	UFUNCTION(BlueprintCallable,Server,Unreliable)
+	void AskToBackWait();
+	
 	//---------------------------------
 	// 以下脚本两两成对，客户端获取信息后去蓝图执行UI相关交互逻辑。
 	// 使用Client进行封装，避开蓝图实现UI但不能同时使用RPC的问题
@@ -93,11 +104,11 @@ public:
 	void SendStartGameMessageToUMG(int32 TotalGameTime);
 
 	// 获取到服务器发来的游戏结束及所有玩家名称和得分信息
-	UFUNCTION(Client,Reliable)
-	void GetMessageToCalScore(const TArray<int32>& PlayerNumber,const TArray<int32>& PlayerScore);
+	UFUNCTION(Client,Unreliable)
+	void GetMessageToCalScore(const TArray<FString>& PlayerNumber,const TArray<int32>& PlayerScore);
 	
 	UFUNCTION(BlueprintImplementableEvent)
-	void SendCalScoreMessageToUMG(const TArray<int32>& PlayerNumber,const TArray<int32>& PlayerScore);
+	void SendCalScoreMessageToUMG(const TArray<FString>& PlayerNumber,const TArray<int32>& PlayerScore);
 
 	// 获取到服务器发来的开始AI场游戏信息，隐藏HUD的部分UI
 	UFUNCTION(Client,Reliable)
@@ -106,6 +117,11 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void SendHideHUDUIMessageToUMG(int32 GameType);
 
+	UFUNCTION(Client,Unreliable)
+	void GetMessageToBackWait();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void SendBackWaitMessageToUMG();
 	
 	//-----------------------
 	// 生成AI的Pawn
