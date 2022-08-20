@@ -120,28 +120,10 @@ void AFPSGameDemoGameModeBase::ChangeFireAbility(bool GetFireAbility)
 
 void AFPSGameDemoGameModeBase::RespawnAIPawn()
 {
-	// if(GetGameStarts.Num() <= 0)return;
-	// AActor* GameStart = GetGameStarts[0];
-	//
-	// AAICharacter* CreatePawn = GetWorld()->SpawnActor<AAICharacter>(
-	// 		AIPawnClass,
-	// 		GameStart->GetActorLocation(),
-	// 		GameStart->GetActorRotation()
-	// 	);
-	//
-	// // 在此处把AI的标签去掉，保证AI不会攻击AI
-	// CreatePawn->Tags.Empty();
-	//
-	//
-	// AMyAIController* AIController = Cast<AMyAIController>(CreatePawn->GetController());
-	// if(AIController == nullptr)
-	// {
-	// 	UE_LOG(LogTemp,Warning,TEXT("AIController Nullptr"));
-	// 	return;
-	// }
-
+	if(!bFirstRespawnAI)
+		return;
 	
-	// 测试的时候先使用前面的代码
+	bFirstRespawnAI = false;
 	for (auto Point : AI_AIPoints)
 	{
 		AAICharacter* CreatePawn = GetWorld()->SpawnActor<AAICharacter>(

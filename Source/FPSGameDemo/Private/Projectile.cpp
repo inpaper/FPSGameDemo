@@ -8,6 +8,7 @@
 #include "TargetScoreLogit.h"
 #include "Components/SphereComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Particles/ParticleSystemComponent.h"
 
 // Sets default values
 AProjectile::AProjectile()
@@ -19,12 +20,19 @@ AProjectile::AProjectile()
 	CollisionMesh = CreateDefaultSubobject<USphereComponent>("CollisionMesh");
 	CollisionMesh->InitSphereRadius(5.0f);
 	SetRootComponent(CollisionMesh);
+
+	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>("MeshComponent");
+	MeshComponent->AttachToComponent(CollisionMesh,FAttachmentTransformRules::KeepRelativeTransform);
 	
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>("ProjectileMovementComponent");
 	// 让子弹创建好后自动发射出去
 	ProjectileMovementComponent->UpdatedComponent = CollisionMesh;
 	ProjectileMovementComponent->bRotationFollowsVelocity = true;
 	ProjectileMovementComponent->bShouldBounce = true;
+
+	LaunchParticleComponent = CreateDefaultSubobject<UParticleSystemComponent>("LaunchParticleComponent");
+	LaunchParticleComponent->bAutoActivate = true;
+	LaunchParticleComponent->AttachToComponent(MeshComponent,FAttachmentTransformRules::KeepRelativeTransform);
 	
 	InitialLifeSpan = 3.0f;
 }
@@ -48,10 +56,12 @@ void AProjectile::Tick(float DeltaTime)
 void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	// 不处理击中地板的子弹
-	if(OtherActor->GetName() == TEXT("Floor"))return;
-
+	if(OtherActor->GetName() == TEXT("Floor"))
+	{
+		// 不做任何处理
+	}
 	// 子弹击中玩家或AI
-	if(OtherActor != nullptr && OtherActor != this && OtherComp != nullptr && Cast<ABaseCharacter>(OtherActor))
+	else if(OtherActor != nullptr && OtherActor != this && OtherComp != nullptr && OtherActor != SourcePlayer && Cast<ABaseCharacter>(OtherActor))
 	{
 		// OtherComp->AddImpulseAtLocation(GetVelocity() * HitForceBonus,GetActorLocation());
 	
@@ -76,13 +86,9 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 				SourcePlayer,
 				UDamageType::StaticClass()
 			);
-		
-		Destroy();
-		return;
 	}
-	
 	// 子弹击中靶子或其他模拟物理物体
-	if(OtherActor != nullptr && OtherActor != this && OtherComp != nullptr && OtherComp->IsSimulatingPhysics())
+	else if(OtherActor != nullptr && OtherActor != this && OtherComp != nullptr && OtherActor != SourcePlayer && OtherComp->IsSimulatingPhysics())
 	{
 		OtherComp->AddImpulseAtLocation(GetVelocity() * HitForceBonus,GetActorLocation());
 
@@ -138,9 +144,11 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 			UE_LOG(LogTemp,Warning,TEXT("Score %d"),DamageSourcePlayerState->PlayerScore);
 			DamageSourcePlayerState->AddScore(1);
 		}
-		
-		Destroy();
-		return;
 	}
+
+	SetRootComponent(LaunchParticleComponent);
+	CollisionMesh->SetNotifyRigidBodyCollision(false);
+	CollisionMesh->DestroyComponent();
+	MeshComponent->DestroyComponent();
 }
 

@@ -2,6 +2,8 @@
 
 
 #include "BaseCharacter.h"
+
+#include "MyGameInstance.h"
 #include "PlayerCharacter.h"
 #include "Components/CapsuleComponent.h"
 #include "FPSGameDemo/FPSGameDemoGameModeBase.h"
@@ -178,6 +180,23 @@ void ABaseCharacter::UpdatePlayerHPInfo_Implementation()
 		DeadPlayer->DeadNumber = CurDeadNumber;
 	}
 
+	// bNotEnd为true，此时全体玩家血量归零，游戏结束
+	// 获取游戏状态，如果不在AI场内部，血量归零不需要显示排名榜
+	UMyGameInstance* ServerGameInstance = Cast<UMyGameInstance>(GameMode->GetGameInstance());
+	if(!ServerGameInstance->IsCurrentState(EPlayerGameMode::PlayingAI))
+	{
+		bNotEnd = true;
+	}
+
+	if(!bNotEnd)
+	{
+		// 如果不能改变状态，说明已经展示了排名榜了，不需要再更新了
+		if(!ServerGameInstance->TransitionToState(EPlayerGameMode::PlayingAIEnd))
+		{
+			bNotEnd = true;
+		}
+	}
+	
 	TArray<FString> PlayerNameNumberArray;
 	if(!bNotEnd)
 	{
@@ -201,7 +220,7 @@ void ABaseCharacter::UpdatePlayerHPInfo_Implementation()
 		// 更新血量信息
 		PlayerController->RefreshPlayerHP(PlayerNameArray,PlayerHPArray);
 
-		// 血量全都为0，游戏结束。
+		// 血量全都为0，游戏结束，显示排名榜
 		if(!bNotEnd)
 		{
 			ABaseCharacter* MyPawn = Cast<ABaseCharacter>(PlayerController->GetPawn());
@@ -219,4 +238,5 @@ void ABaseCharacter::ResumePlayerHP_Implementation()
 {
 	CurrentHP = MaxHP;
 	UpdatePlayerHPInfo();
+	GetMessageToTakeDamage(CurrentHP);
 }

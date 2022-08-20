@@ -33,10 +33,16 @@ public:
 	
 	UPROPERTY(EditAnywhere,Category=Projectile)
 	USphereComponent* CollisionMesh;
+
+	UPROPERTY(EditAnywhere,Category=Projectile)
+	UStaticMeshComponent* MeshComponent;
 	
 	UPROPERTY(VisibleAnywhere,Category=Projectile)
 	UProjectileMovementComponent* ProjectileMovementComponent;
 
+	UPROPERTY(VisibleAnywhere,Category=Projectile)
+	UParticleSystemComponent* LaunchParticleComponent;
+	
 	// 保存投射出来的玩家，击中物体后给对应玩家加分
 	ABaseCharacter* SourcePlayer;
 	

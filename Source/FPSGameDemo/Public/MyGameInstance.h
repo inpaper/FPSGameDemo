@@ -23,6 +23,9 @@ enum class EPlayerGameMode:uint8
 	PlayingTarget,
 	// 在AI场中
 	PlayingAI,
+
+	// AI场中结束时，此时弹出排名榜
+	PlayingAIEnd,
 	
 	Unknown,
 };

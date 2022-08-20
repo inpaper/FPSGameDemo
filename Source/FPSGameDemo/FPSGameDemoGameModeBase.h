@@ -43,6 +43,9 @@ public:
 	TArray<AActor*> Target_PlayerPoints;
 	TArray<AActor*> AI_PlayerPoints;
 	TArray<AActor*> AI_AIPoints;
+
+	// 保存游戏进度，保证不重复生成AIPawn
+	bool bFirstRespawnAI = true;
 	
 	// 传送到靶场的等待时间
 	UPROPERTY(EditAnywhere)

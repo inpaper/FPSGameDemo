@@ -18,7 +18,7 @@ AProjectile_Boom::AProjectile_Boom()
 	SetRootComponent(CollisionMesh);
 
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>("MeshComponent");
-	MeshComponent->AttachTo(CollisionMesh);
+	MeshComponent->AttachToComponent(CollisionMesh,FAttachmentTransformRules::KeepRelativeTransform);
 	
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>("ProjectileMovementComponent");
 	// 让子弹创建好后不会自动发射出去
@@ -33,11 +33,15 @@ AProjectile_Boom::AProjectile_Boom()
 	BoomParticleComponent->bAutoActivate = false;
 	// TODO 虽然这里会Warning 但是目前只有依靠这个代码实现特效正确执行
 	BoomParticleComponent->AttachToComponent(MeshComponent,FAttachmentTransformRules::KeepRelativeTransform);
+
+	LaunchParticleComponent = CreateDefaultSubobject<UParticleSystemComponent>("LaunchParticleComponent");
+	LaunchParticleComponent->bAutoActivate = true;
+	LaunchParticleComponent->AttachToComponent(MeshComponent,FAttachmentTransformRules::KeepRelativeTransform);
 	
 	RadialForceComponent = CreateDefaultSubobject<URadialForceComponent>("RadialForceComponent");
 	RadialForceComponent->Radius = 100.0f;
 	RadialForceComponent->bAutoActivate = false;
-	RadialForceComponent->AttachTo(RootComponent);
+	RadialForceComponent->AttachToComponent(RootComponent,FAttachmentTransformRules::KeepRelativeTransform);
 	
 	InitialLifeSpan = ProjectileLife + ParticleDestroyTime;
 }

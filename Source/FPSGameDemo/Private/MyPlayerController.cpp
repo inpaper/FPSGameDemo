@@ -101,7 +101,7 @@ void AMyPlayerController::AskToStartGame_Implementation(int32 GameType)
 	for (auto PlayerController : GameMode->AllPlayerController)
 	{
 		UE_LOG(LogTemp,Warning,TEXT("准备开始游戏"));
-		PlayerController->GetMessageToPass(GameMode->PassWaitTime);
+		PlayerController->GetMessageToPass(GameMode->PassWaitTime,GameType);
 	}
 
 	PassTimeDelegate.BindUFunction(this,TEXT("Pass"),GameType);
@@ -160,16 +160,21 @@ void AMyPlayerController::Pass_Implementation(int32 GameType)
 		i++;
 		PlayerController->GetMessageToReadyGame(GameMode->StartGameWaitTime);
 	}
-	
-	GameMode->ClearPlayerScore();
-	GameMode->ChangeFireAbility(false);
 
+	// 重置分数
+	GameMode->ClearPlayerScore();
+	// 重置血量
+	for (auto PlayerController : GameMode->AllPlayerController)
+	{
+		ABaseCharacter* BasePawn = Cast<ABaseCharacter>(PlayerController->GetPawn());
+		BasePawn->ResumePlayerHP();
+	}
+	
+	GameMode->ChangeFireAbility(false);
+	
 	if(GameType == 1)
 	{
 		AskToSpawnAIPawn();
-		
-		ABaseCharacter* BasePawn = Cast<ABaseCharacter>(GetPawn());
-		BasePawn->UpdatePlayerHPInfo();
 	}
 	
 	PassTimeDelegate.BindUFunction(this,TEXT("StartGame"),GameType);
@@ -214,15 +219,16 @@ void AMyPlayerController::StartGame_Implementation(int32 GameType)
 	GameMode->ChangeFireAbility(true);
 
 	UE_LOG(LogTemp,Warning,TEXT("测试使用：正式开始游戏!!"));
-	// 客户端显示游戏倒计时
-	for (auto PlayerController : GameMode->AllPlayerController)
-	{
-		PlayerController->GetMessageToStartGame(GameMode->TotalGameTime);
-	}
 
-	// 靶场游戏有倒计时
+	// 靶场游戏有倒计时作为结束条件
 	if(GameType == 0)
 	{
+		// 客户端显示游戏倒计时
+		for (auto PlayerController : GameMode->AllPlayerController)
+		{
+			PlayerController->GetMessageToStartGame(GameMode->TotalGameTime);
+		}
+		
 		GetWorld()->GetTimerManager().SetTimer(PassTimeHandle,this,&AMyPlayerController::EndGame,GameMode->TotalGameTime,false);
 	}
 
@@ -273,7 +279,7 @@ void AMyPlayerController::AskToBackWait_Implementation()
 	
 	// 切换服务器游戏状态
 	UMyGameInstance* ServerGameInstance = Cast<UMyGameInstance>(GameMode->GetGameInstance());
-	if(!ServerGameInstance->IsCurrentState(EPlayerGameMode::PlayingAI) && !ServerGameInstance->IsCurrentState(EPlayerGameMode::PlayingTarget))
+	if(!ServerGameInstance->IsCurrentState(EPlayerGameMode::PlayingAIEnd) && !ServerGameInstance->IsCurrentState(EPlayerGameMode::PlayingTarget))
 	{
 		UE_LOG(LogTemp,Warning,TEXT("Server State is not PlayingAI or PlayingTarget,Fail to WaitingPlayer"));
 		return;
@@ -285,7 +291,6 @@ void AMyPlayerController::AskToBackWait_Implementation()
 	}
 
 	GameMode->ClearPlayerScore();
-	
 	
 	int32 i = 0;
 	for (auto PlayerController : GameMode->AllPlayerController)
@@ -300,13 +305,16 @@ void AMyPlayerController::AskToBackWait_Implementation()
 		ABaseCharacter* GetPawn = Cast<ABaseCharacter>(PlayerController->GetPawn());
 		GetPawn->ResumePlayerHP();
 		PlayerController->GetMessageToBackWait();
+
+		// 通知所有玩家当前玩家数
+		PlayerController->NotifyPlayerSum(GameMode->AllPlayerController.Num());
 	}
 }
 
 
-void AMyPlayerController::GetMessageToPass_Implementation(int32 WaitTime)
+void AMyPlayerController::GetMessageToPass_Implementation(int32 WaitTime,int32 GameType)
 {
-	SendReadyPassMessageToUMG(WaitTime);
+	SendReadyPassMessageToUMG(WaitTime,GameType);
 }
 
 void AMyPlayerController::GetMessageToReadyGame_Implementation(int32 WaitTime)

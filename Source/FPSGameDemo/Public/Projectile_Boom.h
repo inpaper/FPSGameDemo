@@ -37,6 +37,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere,Category=Projectile)
 	UParticleSystemComponent* BoomParticleComponent;
+
+	UPROPERTY(VisibleAnywhere,Category=Projectile)
+	UParticleSystemComponent* LaunchParticleComponent;
 	
 	UPROPERTY(EditAnywhere,Category=Projectile)
 	URadialForceComponent* RadialForceComponent;

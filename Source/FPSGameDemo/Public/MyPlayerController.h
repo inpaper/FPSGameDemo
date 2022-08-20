@@ -84,10 +84,10 @@ public:
 	
 	// 获取到服务器发来的开始游戏信息，在WaitTime后Server进行传送
 	UFUNCTION(Client,Reliable)
-	void GetMessageToPass(int32 WaitTime);
+	void GetMessageToPass(int32 WaitTime,int32 GameType);
 
 	UFUNCTION(BlueprintImplementableEvent)
-	void SendReadyPassMessageToUMG(int32 WaitTime);
+	void SendReadyPassMessageToUMG(int32 WaitTime,int32 GameType);
 
 	// 获取到服务器发来的等待游戏开始信息，在WaitTime后正式开始游戏
 	UFUNCTION(Client,Reliable)
