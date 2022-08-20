@@ -3,7 +3,6 @@
 
 #include "FPSGameDemoGameModeBase.h"
 #include "MyAIController.h"
-#include "MyCharacter.h"
 #include "MyGameInstance.h"
 #include "MyPlayerController.h"
 #include "MyPlayerState.h"
@@ -115,15 +114,21 @@ void AFPSGameDemoGameModeBase::ClearPlayerScore()
 
 void AFPSGameDemoGameModeBase::ChangeFireAbility(bool GetFireAbility)
 {
-	bFireAbility = GetFireAbility;
+	bAllFireAbility = GetFireAbility;
 }
 
 void AFPSGameDemoGameModeBase::RespawnAIPawn()
 {
-	if(!bFirstRespawnAI)
+	// 场景中已有
+	if(AIPawns.Num() > 0)
+	{
+		for (auto AIPawn : AIPawns)
+		{
+			AIPawn->ResumeAIHP();
+		}
 		return;
+	}
 	
-	bFirstRespawnAI = false;
 	for (auto Point : AI_AIPoints)
 	{
 		AAICharacter* CreatePawn = GetWorld()->SpawnActor<AAICharacter>(
@@ -141,5 +146,7 @@ void AFPSGameDemoGameModeBase::RespawnAIPawn()
 			UE_LOG(LogTemp,Warning,TEXT("AIController Nullptr"));
 			return;
 		}
+
+		AIPawns.Add(CreatePawn);
 	}
 }

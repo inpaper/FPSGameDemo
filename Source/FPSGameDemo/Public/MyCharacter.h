@@ -11,6 +11,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "MyCharacter.generated.h"
 
+// 该脚本已弃用，脚本功能拆解成了Player和AI的两大部分，BaseCharacter为两者对应基类
 UCLASS()
 class FPSGAMEDEMO_API AMyCharacter : public ACharacter
 {

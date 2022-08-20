@@ -63,7 +63,11 @@ void UFireComponent::Fire_Implementation(TSubclassOf<class AProjectile> GetProje
 		UE_LOG(LogTemp,Warning,TEXT("GameMode Error"));
 		return;
 	}
-	if(!GameMode->bFireAbility)
+	
+	APawn* Owner = Cast<APawn>(GetOwner());
+	if(Owner == nullptr)return;
+	
+	if(!GameMode->bAllFireAbility || !Cast<ABaseCharacter>(Owner)->bFireAbility)
 	{
 		UE_LOG(LogTemp,Warning,TEXT("Controller Can not Fire"));
 		return;

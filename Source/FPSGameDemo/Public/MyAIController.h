@@ -72,4 +72,13 @@ public:
 
 	// UPROPERTY(Replicated)
 	// float GetLookForward;
+
+	bool bAIAlive = true;
+
+	// 通知行为树AI生命情况
+	UFUNCTION(Server,Unreliable)
+	void ChangeAILive(bool isAlive);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void NotifyToBehaviorTreeIsAlive(bool isAlive);
 };

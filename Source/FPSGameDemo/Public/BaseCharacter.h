@@ -49,11 +49,14 @@ public:
 
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category=HP)
 	int32 CurrentHP = 100;
-
+	
 	bool bDead = false;
 
 	// 记录死亡顺序，用于Ai场游戏结束后计算排名
 	int32 DeadNumber = -1;
+
+	// 是否能够开火，血量归0就不能开火了
+	bool bFireAbility = true;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -81,8 +84,8 @@ public:
 	// 只在服务器运行
 	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
-	// 通知所有扣血的Pawn，客户端展示减少血量
-	UFUNCTION(NetMulticast,Unreliable)
+	// 通知所有扣血的Pawn，客户端展示减少血量，如果此处使用unreliable会丢失，具体原因不明
+	UFUNCTION(NetMulticast,Reliable)
 	void GetMessageToTakeDamage(int32 CurrentHPMessage);
 
 	UFUNCTION(BlueprintImplementableEvent)
@@ -105,6 +108,13 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void SendAIGameOverMessageToUMG(const TArray<FString>& PlayerName);
 
+	// 回复初始血量
 	UFUNCTION(Server,Unreliable)
 	void ResumePlayerHP();
+
+	UFUNCTION(Server,Unreliable)
+	void ResumeAIHP();
+
+	UFUNCTION(Server,Reliable)
+	void NotifyHPZero();
 };

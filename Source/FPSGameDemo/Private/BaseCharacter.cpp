@@ -2,7 +2,8 @@
 
 
 #include "BaseCharacter.h"
-
+#include "AICharacter.h"
+#include "MyAIController.h"
 #include "MyGameInstance.h"
 #include "PlayerCharacter.h"
 #include "Components/CapsuleComponent.h"
@@ -77,14 +78,17 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 void ABaseCharacter::Fire()
 {
 	// UE_LOG(LogTemp,Warning,TEXT("%s Fire"),*GetName());
-	
 	NotifyServerIsFire();
 }
 
 void ABaseCharacter::NotifyServerIsFire_Implementation()
 {
 	if(!HasAuthority())return;
-	NotifyClientsIsFire();
+
+	if(bFireAbility)
+	{
+		NotifyClientsIsFire();
+	}
 }
 
 void ABaseCharacter::NotifyClientsIsFire_Implementation()
@@ -102,10 +106,24 @@ float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 	CurrentHP -= GetDamage;
 	GetMessageToTakeDamage(CurrentHP);
 
+	// 输出伤害者为玩家时需要显示玩家UMG对应血量
 	APlayerCharacter* DamageCauserPawn = Cast<APlayerCharacter>(DamageCauser);
 	if(DamageCauserPawn != nullptr)
 	{
 		DamageCauserPawn->GetMessageToShowHPUMG(this);
+	}
+
+	// 承受伤害者为AI时需要在空血时停止行动
+	AAICharacter* DamageTakePawn = Cast<AAICharacter>(this);
+	if(DamageTakePawn != nullptr)
+	{
+		// 第一次死亡
+		if(CurrentHP <= 0 && !DamageTakePawn->bDead)
+		{
+			bDead = true;
+			DamageTakePawn->NotifyHPZero();
+			Cast<AMyAIController>(DamageTakePawn->GetController())->ChangeAILive(false);
+		}
 	}
 	
 	if(CurrentHP <= 0)
@@ -167,6 +185,7 @@ void ABaseCharacter::UpdatePlayerHPInfo_Implementation()
 			{
 				bDead = true;
 				DeadPlayer = MyPawn;
+				MyPawn->NotifyHPZero();
 			}
 			else
 			{
@@ -174,7 +193,7 @@ void ABaseCharacter::UpdatePlayerHPInfo_Implementation()
 			}
 		}
 	}
-
+	
 	if(DeadPlayer != nullptr)
 	{
 		DeadPlayer->DeadNumber = CurDeadNumber;
@@ -237,6 +256,25 @@ void ABaseCharacter::GetMessageToAIGameOver_Implementation(const TArray<FString>
 void ABaseCharacter::ResumePlayerHP_Implementation()
 {
 	CurrentHP = MaxHP;
-	UpdatePlayerHPInfo();
+	bFireAbility = true;
+	bDead = false;
+	DeadNumber = -1;
 	GetMessageToTakeDamage(CurrentHP);
+	UpdatePlayerHPInfo();
+}
+
+void ABaseCharacter::ResumeAIHP_Implementation()
+{
+	CurrentHP = MaxHP;
+	bFireAbility = true;
+	bDead = false;
+	DeadNumber = -1;
+	Cast<AMyAIController>(this->GetController())->ChangeAILive(true);
+	GetMessageToTakeDamage(CurrentHP);
+}
+
+
+void ABaseCharacter::NotifyHPZero_Implementation()
+{
+	bFireAbility = false;
 }

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AICharacter.h"
 #include "MyPlayerController.h"
 #include "MyPlayerState.h"
 #include "GameFramework/GameModeBase.h"
@@ -44,8 +45,8 @@ public:
 	TArray<AActor*> AI_PlayerPoints;
 	TArray<AActor*> AI_AIPoints;
 
-	// 保存游戏进度，保证不重复生成AIPawn
-	bool bFirstRespawnAI = true;
+	// 保存生成的AI，保证不重复生成AIPawn
+	TArray<AAICharacter*> AIPawns;
 	
 	// 传送到靶场的等待时间
 	UPROPERTY(EditAnywhere)
@@ -60,7 +61,7 @@ public:
 	int32 TotalGameTime = 60;
 
 	// 玩家是否具备开火功能，在准备阶段禁止使用
-	bool bFireAbility = true;
+	bool bAllFireAbility = true;
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class AAICharacter> AIPawnClass; 
