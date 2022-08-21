@@ -65,8 +65,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	PlayerInputComponent->BindAxis("MouseY", this, &APawn::AddControllerPitchInput);
 
 	// 实现控制八方向移动情况。
-	PlayerInputComponent->BindAction("OnlyXOrY",IE_Pressed,this,&APlayerCharacter::StartRunEight);
-	PlayerInputComponent->BindAction("OnlyXOrY",IE_Released,this,&APlayerCharacter::StopRunEight);
+	PlayerInputComponent->BindAction("PlusBtn",IE_Pressed,this,&APlayerCharacter::StartPlusMode);
+	PlayerInputComponent->BindAction("PlusBtn",IE_Released,this,&APlayerCharacter::EndPlusMode);
 
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
@@ -84,12 +84,33 @@ void APlayerCharacter::Fire()
 	Super::Fire();
 	
 	FVector FireLocation = GunComponent->GetSocketLocation(FName("FirePoint"));
-	FRotator FireRotator;
-	CalculateFireRotator(FireLocation,FireRotator);
-	FireComponent->Fire(ProjectileClass,FireLocation,FireRotator);
+
+	if(!bFirePlus)
+	{
+		FRotator FireRotator;
+		CalculateFireRotator(AimPercentX,AimPercentY,FireLocation,FireRotator);
+		FireComponent->Fire(ProjectileClass,FireLocation,FireRotator);
+	}
+	// 四方位发射子弹
+	else
+	{
+		FRotator FireRotator;
+		
+		CalculateFireRotator(0.5f,0.3f,FireLocation,FireRotator);
+		FireComponent->Fire(ProjectileClass,FireLocation,FireRotator);
+
+		CalculateFireRotator(0.5f,0.5f,FireLocation,FireRotator);
+		FireComponent->Fire(ProjectileClass,FireLocation,FireRotator);
+
+		CalculateFireRotator(0.4f,0.5f,FireLocation,FireRotator);
+		FireComponent->Fire(ProjectileClass,FireLocation,FireRotator);
+
+		CalculateFireRotator(0.6f,0.5f,FireLocation,FireRotator);
+		FireComponent->Fire(ProjectileClass,FireLocation,FireRotator);
+	}
 }
 
-void APlayerCharacter::CalculateFireRotator(const FVector FireLocation,FRotator& FireRotator)
+void APlayerCharacter::CalculateFireRotator(const float PercentX,const float PercentY,const FVector FireLocation,FRotator& FireRotator)
 {
 	AMyPlayerController* PlayerController = Cast<AMyPlayerController>(GetController());
 	if(PlayerController == nullptr)return;
@@ -98,8 +119,8 @@ void APlayerCharacter::CalculateFireRotator(const FVector FireLocation,FRotator&
 	PlayerController->GetViewportSize(SizeX,SizeY);
 	
 	float AimX,AimY;
-	AimX = SizeX * AimPercentX;
-	AimY = SizeY * AimPercentY;
+	AimX = SizeX * PercentX;
+	AimY = SizeY * PercentY;
 
 	FVector WorldLocation,WorldDirection;
 	// 服务器上使用DeprojectScreenPositionToWorld会因为获取不到ULocalPlayer而输出位置为0
@@ -125,6 +146,19 @@ void APlayerCharacter::FireBoomIndicatorClose()
 {
 	FireBoomComponent->IndicatorLineClose();
 }
+
+void APlayerCharacter::StartPlusMode()
+{
+	StartRunEight();
+	bFirePlus = true;
+}
+
+void APlayerCharacter::EndPlusMode()
+{
+	StopRunEight();
+	bFirePlus = false;
+}
+
 
 // 更改当前是否可以八方向移动的情况
 void APlayerCharacter::StartRunEight()

@@ -32,10 +32,6 @@ protected:
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-	// Deprecated 弃用该方法,直接在MyCharacter中设置投掷物类型
-	// UFUNCTION(BlueprintCallable,Category="Setup")
-	// void Init(TSubclassOf<class AProjectile> ProjectileToSet);
 	
 	UFUNCTION(Server,Reliable)
 	void Fire(TSubclassOf<class AProjectile> GetProject,FVector FireLocation,FRotator FireDirection);

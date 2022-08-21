@@ -26,7 +26,7 @@ ABaseCharacter::ABaseCharacter()
 	GetCharacterMovement()->AirControl = 0.2f;
 	
 	CameraComponent = CreateDefaultSubobject<UCameraComponent>("CameraComponent");
-
+	FireComponent = CreateDefaultSubobject<UFireComponent>("FireComponent");
 	CameraSpringArmComponent = CreateDefaultSubobject<USpringArmComponent>("CameraSpringArmComponent");
 	
 	// spring使用了pawn控制，因此设置不了初始旋转度数
@@ -37,8 +37,6 @@ ABaseCharacter::ABaseCharacter()
 	CameraSpringArmComponent->TargetArmLength = 600.0f;
 	
 	CameraComponent->AttachTo(CameraSpringArmComponent);
-
-	FireComponent = CreateDefaultSubobject<UFireComponent>("FireComponent");
 }
 
 // Called when the game starts or when spawned

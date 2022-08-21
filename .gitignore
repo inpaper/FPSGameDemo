@@ -8,3 +8,5 @@ BuildRules
 /.vs
 /Packages
 /Build
+/Content/BluePrints/AI/BP_AICharacter1.uasset
+/Content/BluePrints/BP_PlayerCharacter1.uasset

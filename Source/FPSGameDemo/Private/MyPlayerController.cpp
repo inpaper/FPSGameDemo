@@ -289,12 +289,12 @@ void AMyPlayerController::AskToBackWait_Implementation()
 		UE_LOG(LogTemp,Warning,TEXT("TransitionToState WaitingPlayer Error"));
 		return;
 	}
-
-	GameMode->ClearPlayerScore();
 	
 	int32 i = 0;
 	for (auto PlayerController : GameMode->AllPlayerController)
 	{
+		PlayerController->GetMessageToBackWait();
+		
 		UE_LOG(LogTemp,Warning,TEXT("回到等待区域"));
 		// TODO 地图只有三个点位，此处默认人数不大于4，后续可以考虑将代码升级为自动生成点位
 		// 将玩家传送到等待区中的点位
@@ -304,11 +304,12 @@ void AMyPlayerController::AskToBackWait_Implementation()
 
 		ABaseCharacter* GetPawn = Cast<ABaseCharacter>(PlayerController->GetPawn());
 		GetPawn->ResumePlayerHP();
-		PlayerController->GetMessageToBackWait();
-
+		
 		// 通知所有玩家当前玩家数
 		PlayerController->NotifyPlayerSum(GameMode->AllPlayerController.Num());
 	}
+
+	GameMode->ClearPlayerScore();
 }
 
 

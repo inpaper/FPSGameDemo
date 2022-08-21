@@ -19,7 +19,7 @@ class FPSGAMEDEMO_API APlayerCharacter : public ABaseCharacter
 	// 服务器上使用DeprojectScreenPositionToWorld会因为获取不到ULocalPlayer而输出位置为0
 	// 因此DeprojectScreenPositionToWorld在客户端进行计算
 	// TODO 但因为发射位置和发射旋转都在客户端计算，会有作弊的可能性吧？
-	void CalculateFireRotator(const FVector FireLocation,FRotator& FireRotator);
+	void CalculateFireRotator(const float PercentX,const float PercentY,const FVector FireLocation,FRotator& FireRotator);
 
 	UFUNCTION(BlueprintCallable,Category="FireBoom")
 	void FireBoomIndicatorOpen();
@@ -59,6 +59,14 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	bool bFirePlus = false;
+	
+	UFUNCTION(BlueprintCallable)
+	void StartPlusMode();
+
+	UFUNCTION(BlueprintCallable)
+	void EndPlusMode();
+	
 	UFUNCTION(Server,Reliable)
 	void NotifyServerLookForward(float LookForward);
 

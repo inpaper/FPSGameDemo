@@ -2,7 +2,6 @@
 
 
 #include "FireComponent.h"
-
 #include "PlayerCharacter.h"
 #include "Projectile.h"
 #include "Camera/CameraComponent.h"
@@ -47,12 +46,6 @@ void UFireComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorC
 		FireState = EFireState::Ready;
 	}
 }
-
-// 暂时不适用该方法，直接在MyCharacter中设置投掷物类型，看后续蓝图是否会更新掉
-// void UFireComponent::Init(TSubclassOf<AProjectile> ProjectileToSet)
-// {
-// 	ProjectileClass = ProjectileToSet;
-// }
 
 // 按下开火键执行该操作
 void UFireComponent::Fire_Implementation(TSubclassOf<class AProjectile> GetProject,FVector FireLocation,FRotator FireDirection)
