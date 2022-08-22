@@ -99,3 +99,9 @@ void UFireComponent::GetFireDirection(FVector FireLocation,UCameraComponent* Cam
 	FireDirection = UKismetMathLibrary::FindLookAtRotation(StartLocation,HitLocation + GunCameraOffset);
 }
 
+EFireState UFireComponent::GetFireState()
+{
+	return FireState;
+}
+
+

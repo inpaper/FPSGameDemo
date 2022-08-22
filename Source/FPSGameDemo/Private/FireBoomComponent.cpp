@@ -105,6 +105,8 @@ void UFireBoomComponent::FireBoom_Implementation(USkeletalMeshComponent* GunComp
 	if(CreateProjectileBoom->ProjectileMovementComponent == nullptr)return;
 	
 	CreateProjectileBoom->ProjectileMovementComponent->SetVelocityInLocalSpace(InitLocalVelocity);
+
+	CreateProjectileBoom->SourcePlayer = Cast<ABaseCharacter>(Owner);
 }
 
 // 绘制投掷物投掷路线样条曲线

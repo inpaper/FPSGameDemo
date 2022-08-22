@@ -83,7 +83,7 @@ void ABaseCharacter::NotifyServerIsFire_Implementation()
 {
 	if(!HasAuthority())return;
 
-	if(bFireAbility)
+	if(bFireAbility && FireComponent->GetFireState() == EFireState::Ready)
 	{
 		NotifyClientsIsFire();
 	}
@@ -109,19 +109,6 @@ float ABaseCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageE
 	if(DamageCauserPawn != nullptr)
 	{
 		DamageCauserPawn->GetMessageToShowHPUMG(this);
-	}
-
-	// 承受伤害者为AI时需要在空血时停止行动
-	AAICharacter* DamageTakePawn = Cast<AAICharacter>(this);
-	if(DamageTakePawn != nullptr)
-	{
-		// 第一次死亡
-		if(CurrentHP <= 0 && !DamageTakePawn->bDead)
-		{
-			bDead = true;
-			DamageTakePawn->NotifyHPZero();
-			Cast<AMyAIController>(DamageTakePawn->GetController())->ChangeAILive(false);
-		}
 	}
 	
 	if(CurrentHP <= 0)
@@ -267,7 +254,7 @@ void ABaseCharacter::ResumeAIHP_Implementation()
 	bFireAbility = true;
 	bDead = false;
 	DeadNumber = -1;
-	Cast<AMyAIController>(this->GetController())->ChangeAILive(true);
+	Cast<AAICharacter>(this)->ChangeAILive(true);
 	GetMessageToTakeDamage(CurrentHP);
 }
 

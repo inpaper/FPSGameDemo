@@ -56,7 +56,7 @@ void AProjectile_Boom::BeginPlay()
 	// 只在服务器绑定定时炸弹逻辑
 	if(GetLocalRole() != ROLE_Authority)
 	{
-		UE_LOG(LogTemp,Warning,TEXT("Not Server"));
+		UE_LOG(LogTemp,Warning,TEXT("Boom Not Server"));
 		return;
 	}
 	GetWorld()->GetTimerManager().SetTimer(BoomTimeHandle,this,&AProjectile_Boom::Boom,ProjectileLife,false);
@@ -101,16 +101,22 @@ void AProjectile_Boom::Boom_Implementation()
 	}
 
 	GetWorld()->GetTimerManager().ClearTimer(BoomTimeHandle);
+
+	if(SourcePlayer == nullptr)
+	{
+		UE_LOG(LogTemp,Warning,TEXT("%s Projectile No SourcePlayer"),*GetName());
+	}
 	
-	// 炸弹只对玩家血量进行伤害
-	// TODO 目前还没想好炸弹的具体游戏逻辑
+	// 炸弹范围伤害
 	UGameplayStatics::ApplyRadialDamage(
 		this,
 		Damage,
 		GetActorLocation(),
 		RadialForceComponent->Radius,
 		UDamageType::StaticClass(),
-		TArray<AActor*>()
+		TArray<AActor*>(),
+		SourcePlayer,
+		SourcePlayer->GetController()
 	);
 }
 

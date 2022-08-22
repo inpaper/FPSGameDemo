@@ -36,6 +36,8 @@ public:
 	UFUNCTION(Server,Reliable)
 	void Fire(TSubclassOf<class AProjectile> GetProject,FVector FireLocation,FRotator FireDirection);
 
+	EFireState GetFireState();
+	
 	UPROPERTY(EditDefaultsOnly,Category=Projectile)
 	float LineLength = 10000.0f;
 

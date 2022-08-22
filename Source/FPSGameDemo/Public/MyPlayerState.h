@@ -24,6 +24,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly,Category=Score)
 	int32 PlayerScore = 0;
+	
+	int32 PlayerCauseDamage = 0;
+	
 	// 玩家首次登录时用于初始化
 	// TODO 后续考虑使用名称替代Number
 	UFUNCTION()

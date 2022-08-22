@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BaseCharacter.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/ProjectileMovementComponent.h"
@@ -58,7 +59,9 @@ public:
 
 	UPROPERTY(EditAnywhere,Category=Projectile)
 	float Damage = 30.0f;
-	
+
+	// 保存投射出来的玩家，保存伤害来源
+	ABaseCharacter* SourcePlayer;
 private:
 	FTimerHandle BoomTimeHandle;
 

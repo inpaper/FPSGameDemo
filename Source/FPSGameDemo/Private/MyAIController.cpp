@@ -197,9 +197,3 @@ void AMyAIController::NotifyClientsLookForward_Implementation(float LookForward)
 	MyCharacter->GetLookForward = LookForward;
 }
 
-void AMyAIController::ChangeAILive_Implementation(bool isAlive)
-{
-	bAIAlive = isAlive;
-	NotifyToBehaviorTreeIsAlive(isAlive);
-}
-

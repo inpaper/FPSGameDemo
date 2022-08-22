@@ -60,18 +60,18 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 	{
 		// 不做任何处理
 	}
+	// 只在服务器处理碰撞带来的事件，在其他仅实现物理效果
+	else if(GetLocalRole() != ROLE_Authority)
+	{
+		// 子弹击中靶子或其他模拟物理物体
+		if(OtherActor != nullptr && OtherActor != this && OtherComp != nullptr && OtherActor != SourcePlayer && OtherComp->IsSimulatingPhysics())
+		{
+			OtherComp->AddImpulseAtLocation(GetVelocity() * HitForceBonus,GetActorLocation());
+		}
+	}
 	// 子弹击中玩家或AI
 	else if(OtherActor != nullptr && OtherActor != this && OtherComp != nullptr && OtherActor != SourcePlayer && Cast<ABaseCharacter>(OtherActor))
 	{
-		// OtherComp->AddImpulseAtLocation(GetVelocity() * HitForceBonus,GetActorLocation());
-	
-		// 只在服务器处理碰撞带来的加分事件
-		if(GetLocalRole() != ROLE_Authority)
-		{
-			UE_LOG(LogTemp,Warning,TEXT("Not Server"));
-			return;
-		}
-
 		if(SourcePlayer == nullptr)
 		{
 			UE_LOG(LogTemp,Warning,TEXT("%s Projectile No SourcePlayer"),*GetName());
@@ -91,58 +91,52 @@ void AProjectile::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, U
 	else if(OtherActor != nullptr && OtherActor != this && OtherComp != nullptr && OtherActor != SourcePlayer && OtherComp->IsSimulatingPhysics())
 	{
 		OtherComp->AddImpulseAtLocation(GetVelocity() * HitForceBonus,GetActorLocation());
-
-		// 只在服务器处理碰撞带来的加分事件
-		if(GetLocalRole() != ROLE_Authority)
-		{
-			UE_LOG(LogTemp,Warning,TEXT("Not Server"));
-			return;
-		}
-
-		// 根据击中点距离靶心的距离判断是否正确击中靶子而并非靶架
-		if(!OtherComp->DoesSocketExist(FName("TargetCenter")))
-		{
-			UE_LOG(LogTemp,Error,TEXT("%s Actor %s Component Miss The Socket 'TargetCenter'"),*OtherActor->GetName(),*OtherComp->GetName());
-			Destroy();
-			return;
-		}
 		
-		FVector TargetCenter = OtherComp->GetSocketLocation(FName("TargetCenter"));
-		FVector CurHitLoc = Hit.Location;
-		float Distance = FVector::Distance(CurHitLoc,TargetCenter);
-
-		if(Distance >= 100)
+		// 根据击中点距离靶心的距离判断是否正确击中靶子而并非靶架
+		if(OtherComp->DoesSocketExist(FName("TargetCenter")))
 		{
-			// 击中靶架
-			UE_LOG(LogTemp,Warning,TEXT("击中靶架"));
-		}else
-		{
-			// 击中靶心
-			UE_LOG(LogTemp,Warning,TEXT("击中靶心"));
-			if(SourcePlayer == nullptr)
-			{
-				UE_LOG(LogTemp,Warning,TEXT("%s Projectile No SourcePlayer"),*GetName());
-				Destroy();
-				return;
-			}
+			FVector TargetCenter = OtherComp->GetSocketLocation(FName("TargetCenter"));
+			FVector CurHitLoc = Hit.Location;
+			float Distance = FVector::Distance(CurHitLoc,TargetCenter);
 
-			// 只有第一个击中靶心的才会加分
-			UActorComponent* TargetComponent = OtherActor->GetComponentByClass(UTargetScoreLogit::StaticClass());
-			if(TargetComponent == nullptr)
+			if(Distance >= 100)
 			{
-				UE_LOG(LogTemp,Warning,TEXT("%s HitActor Miss UTargetScoreLogit"),*GetName());
-				Destroy();
-				return;
+				// 击中靶架
+				UE_LOG(LogTemp,Warning,TEXT("击中靶架"));
 			}
-			UTargetScoreLogit* TargetScoreLogitComponent = Cast<UTargetScoreLogit>(TargetComponent);
+			else
+			{
+				// 击中靶心
+				UE_LOG(LogTemp,Warning,TEXT("击中靶心"));
+				if(SourcePlayer == nullptr)
+				{
+					UE_LOG(LogTemp,Warning,TEXT("%s Projectile No SourcePlayer"),*GetName());
+					Destroy();
+					return;
+				}
+
+				// 只有第一个击中靶心的才会加分
+				UActorComponent* TargetComponent = OtherActor->GetComponentByClass(UTargetScoreLogit::StaticClass());
+				if(TargetComponent == nullptr)
+				{
+					UE_LOG(LogTemp,Warning,TEXT("%s HitActor Miss UTargetScoreLogit"),*GetName());
+					Destroy();
+					return;
+				}
+				UTargetScoreLogit* TargetScoreLogitComponent = Cast<UTargetScoreLogit>(TargetComponent);
 			
-			if(TargetScoreLogitComponent->bHit)return;
-			TargetScoreLogitComponent->bHit = true;
+				if(TargetScoreLogitComponent->bHit)return;
+				TargetScoreLogitComponent->bHit = true;
 
-			UE_LOG(LogTemp,Warning,TEXT("%s"),*SourcePlayer->GetName());
-			AMyPlayerState* DamageSourcePlayerState = Cast<AMyPlayerState>(SourcePlayer->GetPlayerState());
-			UE_LOG(LogTemp,Warning,TEXT("Score %d"),DamageSourcePlayerState->PlayerScore);
-			DamageSourcePlayerState->AddScore(1);
+				UE_LOG(LogTemp,Warning,TEXT("%s"),*SourcePlayer->GetName());
+				AMyPlayerState* DamageSourcePlayerState = Cast<AMyPlayerState>(SourcePlayer->GetPlayerState());
+				// UE_LOG(LogTemp,Warning,TEXT("Score %d"),DamageSourcePlayerState->PlayerScore);
+				DamageSourcePlayerState->AddScore(1);
+			}
+		}
+		else
+		{
+			UE_LOG(LogTemp,Warning,TEXT("%s Actor %s Component Miss The Socket 'TargetCenter'"),*OtherActor->GetName(),*OtherComp->GetName());
 		}
 	}
 
