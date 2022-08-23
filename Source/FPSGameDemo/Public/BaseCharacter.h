@@ -117,4 +117,10 @@ public:
 
 	UFUNCTION(Server,Reliable)
 	void NotifyHPZero();
+
+	UFUNCTION(Client,Unreliable)
+	void NotifyPlayerIsDeadTextToShow(bool isDead);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void NotifyPlayerIsDeadTextToUMG(bool isDead);
 };

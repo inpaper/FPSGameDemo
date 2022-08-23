@@ -246,6 +246,8 @@ void ABaseCharacter::ResumePlayerHP_Implementation()
 	DeadNumber = -1;
 	GetMessageToTakeDamage(CurrentHP);
 	UpdatePlayerHPInfo();
+
+	NotifyPlayerIsDeadTextToShow(false);
 }
 
 void ABaseCharacter::ResumeAIHP_Implementation()
@@ -262,4 +264,15 @@ void ABaseCharacter::ResumeAIHP_Implementation()
 void ABaseCharacter::NotifyHPZero_Implementation()
 {
 	bFireAbility = false;
+
+	// 玩家血量归零 在UMG上展示你已死亡字样
+	if(Cast<APlayerCharacter>(this) != nullptr)
+	{
+		NotifyPlayerIsDeadTextToShow(true);
+	}
+}
+
+void ABaseCharacter::NotifyPlayerIsDeadTextToShow_Implementation(bool isDead)
+{
+	NotifyPlayerIsDeadTextToUMG(isDead);
 }

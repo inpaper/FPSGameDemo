@@ -57,6 +57,9 @@ AActor* AMyAIController::FindNearlyPlayer()
 		// 在有人机的情况下进入 存在只有玩家控制器还没有Pawn的情况
 		if(PlayerController->GetPawn() == nullptr)continue;
 
+		// 不攻击已经死亡的玩家
+		if(Cast<ABaseCharacter>(PlayerController->GetPawn())->bDead)continue;
+
 		FVector PlayerLocation = PlayerController->GetPawn()->GetActorLocation();
 		FVector AILocation = ControlPawn->GetActorLocation();
 
